@@ -87,8 +87,36 @@ body {
     border: none !important;
   }
 
+  /* Multi-up print layouts (A4 pembagian) */
+  .print-sheet {
+    width: 100%;
+  }
+  .print-grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0 !important;
+  }
+  .print-grid-4 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
+    gap: 0 !important;
+  }
+  .print-cell {
+    border: 1px solid #cbd5e1 !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+  .print-cell-sm {
+    border: 1px solid #cbd5e1 !important;
+    padding: 5px !important;
+    overflow: hidden !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+  }
+
   @page {
-    margin: 1cm;
-    size: auto;
+    margin: 0.5cm;
+    size: A4;
   }
 }

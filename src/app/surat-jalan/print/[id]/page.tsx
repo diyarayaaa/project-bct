@@ -82,11 +82,14 @@ export default function PrintSuratJalanPage({
         </button>
       </div>
 
-      {/* Printable Paper Document (A4 format) */}
-      <div
-        id="surat-jalan-document"
-        className="printable-area bg-white p-8 sm:p-12 rounded-2xl border border-slate-300 shadow-md text-slate-900 text-sm font-sans space-y-6"
-      >
+      {/* Printable Paper Document (A4 dibagi 2) */}
+      <div className="print-grid-2 print-sheet">
+        {[0, 1].map((copy) => (
+          <div
+            key={copy}
+            id={copy === 0 ? 'surat-jalan-document' : undefined}
+            className="print-cell bg-white p-6 sm:p-8 rounded-none border-slate-300 text-slate-900 text-sm font-sans space-y-4"
+          >
         {/* Kop Surat Header */}
         <div className="border-b-2 border-slate-900 pb-4 flex items-start justify-between gap-4">
           <div>
@@ -222,6 +225,8 @@ export default function PrintSuratJalanPage({
             <p className="text-[10px] text-slate-400">Tgl: _______________</p>
           </div>
         </div>
+          </div>
+        ))}
       </div>
     </div>
   );

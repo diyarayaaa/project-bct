@@ -110,232 +110,219 @@ Terima kasih.`;
 
 /**
  * Pipeline 1: Laporan WA Operasional Mingguan (Hari Kamis)
- * Mengelompokkan:
- * 1. BARANG KE BANDUNG (dikirim hari ini ke BDG)
- * 2. BARANG DI VENDOR BDG (sedang di BDG)
- * 3. BARANG DI VENDOR JKT (sedang di JKT)
- * 4. GARANSIAN BELUM DIPROSES
+ * Format PERSIS seperti AppScript LAPORAN_WA (v5.0):
+ * - grouping by distributor (BDG/JKT suffix di-strip)
+ * - format tree: NAMA BARANG / ├─ S/N / ├─ Keluhan / ├─ User / └─ Catt
+ * - pembatas ---- antar section
+ * - STOCK BCT -> "Stok"
  */
 export function formatOperationalReport(tickets: Ticket[], dateString?: string): string {
   const todayStr = dateString || new Date().toISOString().split('T')[0];
   const dateDisplay = formatDateIndo(todayStr);
 
-  // 1. Barang ke Bandung (dikirim hari ini ke BDG)
-  const barangKeBdg = tickets.filter(t => {
-    const isVendorBdg = (t.distributor_vendor || '').toUpperCase().includes('BDG');
-    const isKirimHariIni = t.tgl_kirim_vendor && t.tgl_kirim_vendor.startsWith(todayStr);
-    return isVendorBdg && isKirimHariIni;
+  // helper: cek barang ke bandung (dikirim hari ini)
+  const barangKeBdg = tickets.filter((t) => {
+    const jenisOk = (t.jenis_layanan === 'GARANSI' && t.status === 'PROSES GARANSI') ||
+      (t.jenis_layanan === 'SERVICE' && t.status === 'ALIH SERVICE');
+    if (!jenisOk) return false;
+    const tgl = t.tgl_kirim_vendor;
+    if (!tgl) return false;
+    return tgl.startsWith(todayStr);
   });
 
-  // 2. Barang di Vendor BDG (status PROSES GARANSI / ALIH SERVICE di vendor BDG, belum selesai)
-  const barangDiVendorBdg = tickets.filter(t => {
-    const isVendorBdg = (t.distributor_vendor || '').toUpperCase().includes('BDG');
-    const isProgress = t.status === 'PROSES GARANSI' || t.status === 'ALIH SERVICE';
-    const bukanKirimHariIni = !t.tgl_kirim_vendor || !t.tgl_kirim_vendor.startsWith(todayStr);
-    return isVendorBdg && isProgress && bukanKirimHariIni;
-  });
+  // helper: di vendor, bukan kirim hari ini
+  function diVendor(wilayah: 'BDG' | 'JKT') {
+    return tickets.filter((t) => {
+      const jenisOk = (t.jenis_layanan === 'GARANSI' && t.status === 'PROSES GARANSI') ||
+        (t.jenis_layanan === 'SERVICE' && t.status === 'ALIH SERVICE');
+      if (!jenisOk) return false;
+      const tgl = t.tgl_kirim_vendor;
+      if (tgl && tgl.startsWith(todayStr)) return false; // yang dikirim hari ini gak masuk
+      const dist = (t.distributor_vendor || '').toUpperCase();
+      return wilayah === 'BDG' ? dist.endsWith('BDG') : dist.endsWith('JKT');
+    });
+  }
 
-  // 3. Barang di Vendor JKT (status PROSES GARANSI / ALIH SERVICE di vendor JKT)
-  const barangDiVendorJkt = tickets.filter(t => {
-    const isVendorJkt = (t.distributor_vendor || '').toUpperCase().includes('JKT');
-    const isProgress = t.status === 'PROSES GARANSI' || t.status === 'ALIH SERVICE';
-    return isVendorJkt && isProgress;
-  });
+  const barangDiVendorBdg = diVendor('BDG');
+  const barangDiVendorJkt = diVendor('JKT');
 
-  // 4. Garansian Belum Diproses (Jenis GARANSI atau ALIH SERVICE tapi belum ada tgl_kirim / no_surat_jalan dan masih berstatus pending/proses awal)
-  const garansiBelumDiproses = tickets.filter(t => {
+  // Garansian belum diproses / belum dikirim
+  const garansiBelumDiproses = tickets.filter((t) => {
     const isGaransiOrAlih = t.jenis_layanan === 'GARANSI' || t.status === 'ALIH SERVICE' || t.status === 'PROSES GARANSI';
     const belumKirim = !t.tgl_kirim_vendor && !t.no_surat_jalan;
     const belumSelesai = t.status !== 'SELESAI & DIAMBIL' && t.status !== 'SELESAI BELUM DIAMBIL' && t.status !== 'GAGAL SERVICE/GARANSI';
     return isGaransiOrAlih && belumKirim && belumSelesai;
   });
 
-  // Helper untuk grouping by vendor
-  function groupByVendor(items: Ticket[]) {
+  function userTag(cust: string): string {
+    return (cust || '').toUpperCase() === 'STOCK BCT' ? 'Stok' : (cust || '-');
+  }
+
+  function treeRow(t: Ticket, withTanggal = false): string {
+    let s = '';
+    if (withTanggal) s += `${formatDateIndo(t.tgl_kirim_vendor)}\n`;
+    s += `${String(t.nama_barang || '-').toUpperCase()}\n`;
+    s += `├─ S/N: ${t.serial_number || '-'}\n`;
+    s += `├─ Keluhan: ${t.keluhan || '-'}\n`;
+    s += `├─ User: ${userTag(t.nama_customer)}\n`;
+    s += `└─ Catt: ${t.catatan || '-'}\n`;
+    return s;
+  }
+
+  function groupSection(items: Ticket[]): string {
     const map = new Map<string, Ticket[]>();
-    for (const item of items) {
-      const v = cleanVendorName(item.distributor_vendor || 'LAINNYA');
+    for (const t of items) {
+      const v = cleanVendorName(t.distributor_vendor || 'LAINNYA');
       if (!map.has(v)) map.set(v, []);
-      map.get(v)!.push(item);
+      map.get(v)!.push(t);
     }
-    return map;
-  }
-
-  let text = `*📋 LAPORAN OPERASIONAL SERVICE & RMA BEST COMPUTEL*\n`;
-  text += `*Tanggal:* ${dateDisplay}\n`;
-  text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  // 1. BARANG KE BANDUNG
-  text += `*📦 BARANG KE BANDUNG (${barangKeBdg.length} UNIT)*\n`;
-  if (barangKeBdg.length === 0) {
-    text += `- (Tidak ada pengiriman ke Bandung hari ini)\n\n`;
-  } else {
-    const grouped = groupByVendor(barangKeBdg);
-    grouped.forEach((vTickets, vName) => {
-      text += `*${vName}*\n`;
-      vTickets.forEach((t, idx) => {
-        text += `${idx + 1}. [${t.nomor_layanan}] ${t.nama_barang} (SN: ${t.serial_number}) - Keluhan: ${t.keluhan} (${t.nama_customer})\n`;
+    let out = '';
+    Array.from(map.keys()).sort().forEach((v) => {
+      out += `*${v.toUpperCase()}*\n`;
+      map.get(v)!.forEach((t) => {
+        out += treeRow(t);
       });
+      out += `\n`;
     });
-    text += `\n`;
+    return out;
   }
 
-  // 2. BARANG DI VENDOR BDG
-  text += `*🏢 BARANG DI VENDOR BANDUNG (${barangDiVendorBdg.length} UNIT)*\n`;
-  if (barangDiVendorBdg.length === 0) {
-    text += `- (Tidak ada unit di vendor Bandung)\n\n`;
-  } else {
-    const grouped = groupByVendor(barangDiVendorBdg);
-    grouped.forEach((vTickets, vName) => {
-      text += `*${vName}*\n`;
-      vTickets.forEach((t, idx) => {
-        const kirim = formatDateIndo(t.tgl_kirim_vendor);
-        text += `${idx + 1}. [${t.nomor_layanan}] ${t.nama_barang} (Kirim: ${kirim}) - ${t.keluhan} [${t.nama_customer}]\n`;
-      });
-    });
-    text += `\n`;
-  }
+  const SEP = '--------------------------------------------------\n--------------------------------------------------\n';
 
-  // 3. BARANG DI VENDOR JKT
-  text += `*🏢 BARANG DI VENDOR JAKARTA (${barangDiVendorJkt.length} UNIT)*\n`;
-  if (barangDiVendorJkt.length === 0) {
-    text += `- (Tidak ada unit di vendor Jakarta)\n\n`;
-  } else {
-    const grouped = groupByVendor(barangDiVendorJkt);
-    grouped.forEach((vTickets, vName) => {
-      text += `*${vName}*\n`;
-      vTickets.forEach((t, idx) => {
-        const kirim = formatDateIndo(t.tgl_kirim_vendor);
-        text += `${idx + 1}. [${t.nomor_layanan}] ${t.nama_barang} (Kirim: ${kirim}) - ${t.keluhan} [${t.nama_customer}]\n`;
-      });
-    });
-    text += `\n`;
-  }
-
-  // 4. GARANSIAN BELUM DIPROSES
-  text += `*⏳ GARANSIAN BELUM DIPROSES / BELUM DIKIRIM (${garansiBelumDiproses.length} UNIT)*\n`;
+  let text = '';
+  text += `*BARANG KE BANDUNG ${dateDisplay}*\n\n`;
+  text += barangKeBdg.length === 0 ? '(Tidak ada pengiriman ke Bandung hari ini)\n\n' : groupSection(barangKeBdg);
+  text += SEP;
+  text += `*BARANG DI VENDOR BDG*\n\n`;
+  text += barangDiVendorBdg.length === 0 ? '(Tidak ada unit di vendor Bandung)\n\n' : groupSection(barangDiVendorBdg);
+  text += SEP;
+  text += `*BARANG DI VENDOR JKT*\n\n`;
+  text += barangDiVendorJkt.length === 0 ? '(Tidak ada unit di vendor Jakarta)\n\n' : groupSection(barangDiVendorJkt);
+  text += SEP;
+  text += `*GARANSIAN BELUM DIPROSES / BELUM DIKIRIM*\n\n`;
   if (garansiBelumDiproses.length === 0) {
-    text += `- (Semua unit garansi telah terproses/terkirim)\n\n`;
+    text += '(Semua unit garansi telah terproses/terkirim)\n\n';
   } else {
     garansiBelumDiproses.forEach((t, idx) => {
-      text += `${idx + 1}. [${t.nomor_layanan}] ${t.nama_barang} (Masuk: ${formatDateIndo(t.tanggal_masuk)}) - ${t.keluhan} [${t.nama_customer}] (Teknisi: ${t.teknisi})\n`;
+      text += `${idx + 1}. [${t.nomor_layanan}] ${t.nama_barang} (Masuk: ${formatDateIndo(t.tanggal_masuk)}) - ${t.keluhan} [${userTag(t.nama_customer)}] (Teknisi: ${t.teknisi})\n`;
     });
     text += `\n`;
   }
-
-  text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `*Best Computel Operasional & Logistics*`;
+  text += `Best Computel Operasional & Logistics`;
 
   return text;
 }
 
 /**
  * Pipeline 2: Laporan WA Sales (Target: 0821-2008-1484)
- * Filter ketat: Customer = 'STOCK BCT' atau 'GHITP'
- * Membandingkan SN Lama vs SN Baru jika 'Diganti baru'
+ * Format PERSIS seperti AppScript LAPORAN_WA_SALES (v1.0):
+ * - filter ketat STOCK BCT / GHITP
+ * - GARANSIAN SELESAI (by TGL DIAMBIL CUST hari ini): S/N Lama, S/N Baru, Catt
+ * - GARANSIAN DI VENDOR BDG / JKT: tanggal, barang, ├─ S/N, ├─ Keluhan, └─ Catt
  */
 export function formatSalesReport(tickets: Ticket[], dateString?: string): string {
-  const dateDisplay = formatDateIndo(dateString || new Date().toISOString().split('T')[0]);
+  const todayStr = dateString || new Date().toISOString().split('T')[0];
+  const dateDisplay = formatDateIndo(todayStr);
 
-  // Filter ketat stok internal
-  const stockTickets = tickets.filter(t => {
-    const upper = (t.nama_customer || '').toUpperCase();
-    return upper.includes('STOCK BCT') || upper.includes('GHITP');
+  const stockTickets = tickets.filter((t) => {
+    const upper = (t.nama_customer || '').trim().toUpperCase();
+    return upper === 'STOCK BCT' || upper === 'GHITP';
   });
 
-  // 1. Garansian Selesai (Siap Jual / Selesai)
-  const selesai = stockTickets.filter(t => 
-    t.status === 'SELESAI BELUM DIAMBIL' || t.status === 'SELESAI & DIAMBIL'
-  );
+  // 1. GARANSIAN SELESAI (TGL DIAMBIL CUST == hari ini)
+  const selesai = stockTickets.filter((t) => {
+    const statusOk = t.status === 'SELESAI BELUM DIAMBIL' || t.status === 'SELESAI & DIAMBIL';
+    if (!statusOk) return false;
+    const tgl = t.tgl_diambil_customer;
+    return tgl && tgl.startsWith(todayStr);
+  });
 
-  // 2. Di Vendor BDG
-  const diVendorBdg = stockTickets.filter(t => 
-    (t.status === 'PROSES GARANSI' || t.status === 'ALIH SERVICE') &&
-    (t.distributor_vendor || '').toUpperCase().includes('BDG')
-  );
-
-  // 3. Di Vendor JKT
-  const diVendorJkt = stockTickets.filter(t => 
-    (t.status === 'PROSES GARANSI' || t.status === 'ALIH SERVICE') &&
-    (t.distributor_vendor || '').toUpperCase().includes('JKT')
-  );
-
-  // 4. Belum Diproses
-  const belumDiproses = stockTickets.filter(t => 
-    (t.jenis_layanan === 'GARANSI' || t.status === 'PROSES GARANSI') &&
-    !t.tgl_kirim_vendor &&
-    t.status !== 'SELESAI BELUM DIAMBIL' &&
-    t.status !== 'SELESAI & DIAMBIL' &&
-    t.status !== 'GAGAL SERVICE/GARANSI'
-  );
-
-  let text = `*💼 REKAP RMA STOK TOKO (STOCK BCT / GHITP)*\n`;
-  text += `*Kepada:* Tim Sales (${SALES_WA_NUMBER})\n`;
-  text += `*Tanggal:* ${dateDisplay}\n`;
-  text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  // 1. GARANSIAN SELESAI
-  text += `*✅ 1. GARANSIAN SELESAI / SIAP JUAL (${selesai.length} UNIT)*\n`;
-  if (selesai.length === 0) {
-    text += `- (Belum ada unit stok baru yang selesai)\n\n`;
-  } else {
-    selesai.forEach((t, idx) => {
-      const customerTag = t.nama_customer.toUpperCase().includes('GHITP') ? '[GHITP]' : '[STOCK BCT]';
-      const hasil = t.hasil_service_garansi === 'Diganti baru' ? '🔄 GANTI UNIT BARU' : '🔧 DISERVICE';
-      text += `${idx + 1}. ${customerTag} *${t.nama_barang}*\n`;
-      text += `   • No RMA: ${t.nomor_layanan}\n`;
-      text += `   • Hasil: ${hasil}\n`;
-      if (t.hasil_service_garansi === 'Diganti baru' && t.sn_baru) {
-        text += `   • SN Lama: ~${t.serial_number}~\n`;
-        text += `   • SN Baru: *${t.sn_baru}* ✨\n`;
-      } else {
-        text += `   • SN: ${t.serial_number}\n`;
-      }
-      text += `   • Tanggal Datang: ${formatDateIndo(t.tgl_datang_vendor || t.updated_at)}\n\n`;
+  // 2 & 3. DI VENDOR BDG / JKT (status PROSES GARANSI, jenis GARANSI)
+  function diVendor(wilayah: 'BDG' | 'JKT') {
+    return stockTickets.filter((t) => {
+      if (t.jenis_layanan !== 'GARANSI') return false;
+      if (t.status !== 'PROSES GARANSI') return false;
+      const dist = (t.distributor_vendor || '').toUpperCase();
+      return wilayah === 'BDG' ? dist.endsWith('BDG') : dist.endsWith('JKT');
     });
   }
-
-  // 2. DI VENDOR BDG
-  text += `*🏢 2. GARANSIAN DI VENDOR BANDUNG (${diVendorBdg.length} UNIT)*\n`;
-  if (diVendorBdg.length === 0) {
-    text += `- (Kosong)\n\n`;
-  } else {
-    diVendorBdg.forEach((t, idx) => {
-      const vClean = cleanVendorName(t.distributor_vendor || '');
-      text += `${idx + 1}. [${t.nama_customer}] *${t.nama_barang}* (SN: ${t.serial_number})\n`;
-      text += `   • Vendor: ${vClean}\n`;
-      text += `   • Tgl Kirim: ${formatDateIndo(t.tgl_kirim_vendor)}\n`;
-      text += `   • Keluhan: ${t.keluhan}\n\n`;
-    });
-  }
-
-  // 3. DI VENDOR JKT
-  text += `*🏢 3. GARANSIAN DI VENDOR JAKARTA (${diVendorJkt.length} UNIT)*\n`;
-  if (diVendorJkt.length === 0) {
-    text += `- (Kosong)\n\n`;
-  } else {
-    diVendorJkt.forEach((t, idx) => {
-      const vClean = cleanVendorName(t.distributor_vendor || '');
-      text += `${idx + 1}. [${t.nama_customer}] *${t.nama_barang}* (SN: ${t.serial_number})\n`;
-      text += `   • Vendor: ${vClean}\n`;
-      text += `   • Tgl Kirim: ${formatDateIndo(t.tgl_kirim_vendor)}\n`;
-      text += `   • Keluhan: ${t.keluhan}\n\n`;
-    });
-  }
+  const diVendorBdg = diVendor('BDG');
+  const diVendorJkt = diVendor('JKT');
 
   // 4. BELUM DIPROSES
-  text += `*⏳ 4. GARANSIAN BELUM DIPROSES (${belumDiproses.length} UNIT)*\n`;
+  const belumDiproses = stockTickets.filter((t) => {
+    const isGaransi = t.jenis_layanan === 'GARANSI' || t.status === 'PROSES GARANSI';
+    const belumKirim = !t.tgl_kirim_vendor;
+    const belumSelesai = t.status !== 'SELESAI BELUM DIAMBIL' && t.status !== 'SELESAI & DIAMBIL' && t.status !== 'GAGAL SERVICE/GARANSI';
+    return isGaransi && belumKirim && belumSelesai;
+  });
+
+  function groupSelesai(items: Ticket[]): string {
+    const map = new Map<string, Ticket[]>();
+    for (const t of items) {
+      const v = cleanVendorName(t.distributor_vendor || 'LAINNYA');
+      if (!map.has(v)) map.set(v, []);
+      map.get(v)!.push(t);
+    }
+    let out = '';
+    Array.from(map.keys()).sort().forEach((v) => {
+      out += `*${v.toUpperCase()}*\n`;
+      map.get(v)!.forEach((t) => {
+        const tag = (t.nama_customer || '').toUpperCase().includes('GHITP') ? '[GHITP]' : '[STOCK BCT]';
+        out += `${tag} ${String(t.nama_barang || '-').toUpperCase()}\n`;
+        out += `├─ S/N Lama: ${t.serial_number || '-'}\n`;
+        out += `├─ S/N Baru: ${t.sn_baru || '-'}\n`;
+        out += `└─ Catt: ${t.catatan || '-'}\n`;
+      });
+      out += `\n`;
+    });
+    return out;
+  }
+
+  function groupVendor(items: Ticket[]): string {
+    const map = new Map<string, Ticket[]>();
+    for (const t of items) {
+      const v = cleanVendorName(t.distributor_vendor || 'LAINNYA');
+      if (!map.has(v)) map.set(v, []);
+      map.get(v)!.push(t);
+    }
+    let out = '';
+    Array.from(map.keys()).sort().forEach((v) => {
+      out += `*${v.toUpperCase()}*\n`;
+      map.get(v)!.forEach((t) => {
+        out += `${formatDateIndo(t.tgl_kirim_vendor)}\n`;
+        out += `${String(t.nama_barang || '-').toUpperCase()}\n`;
+        out += `├─ S/N: ${t.serial_number || '-'}\n`;
+        out += `├─ Keluhan: ${t.keluhan || '-'}\n`;
+        out += `└─ Catt: ${t.catatan || '-'}\n`;
+      });
+      out += `\n`;
+    });
+    return out;
+  }
+
+  const SEP = '--------------------------------------------------\n--------------------------------------------------\n';
+
+  let text = '';
+  text += `*GARANSIAN SELESAI ${dateDisplay} (STOK BCT/GHITP)*\n\n`;
+  text += selesai.length === 0 ? '(Belum ada unit stok baru yang selesai)\n\n' : groupSelesai(selesai);
+  text += SEP;
+  text += `*GARANSIAN DI VENDOR BDG (STOK BCT/GHITP)*\n\n`;
+  text += diVendorBdg.length === 0 ? '(Kosong)\n\n' : groupVendor(diVendorBdg);
+  text += SEP;
+  text += `*GARANSIAN DI VENDOR JKT (STOK BCT/GHITP)*\n\n`;
+  text += diVendorJkt.length === 0 ? '(Kosong)\n\n' : groupVendor(diVendorJkt);
+  text += SEP;
+  text += `*GARANSIAN BELUM DIPROSES (STOK BCT/GHITP)*\n\n`;
   if (belumDiproses.length === 0) {
-    text += `- (Semua stok garansi telah diproses)\n\n`;
+    text += '(Semua stok garansi telah diproses)\n\n';
   } else {
     belumDiproses.forEach((t, idx) => {
       text += `${idx + 1}. [${t.nama_customer}] *${t.nama_barang}* (SN: ${t.serial_number}) - ${t.keluhan}\n`;
     });
     text += `\n`;
   }
-
-  text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `*Best Computel RMA & Stock Division*`;
+  text += `Best Computel RMA & Stock Division`;
 
   return text;
 }

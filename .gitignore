@@ -44,3 +44,8 @@ next-env.d.ts
 *.sqlite-shm
 *.sqlite-wal
 *.sqlite-journal
+
+# local database (regenerable from sheet)
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
