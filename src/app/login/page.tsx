@@ -12,17 +12,8 @@ import {
   EyeOff,
   ShieldCheck,
   AlertCircle,
-  Sparkles,
-  ArrowRight,
-  Check
+  ArrowRight
 } from 'lucide-react';
-
-const QUICK_USERS = [
-  { username: 'wandi', name: 'Wandi', role: 'Teknisi Utama', type: 'TEKNISI', color: 'orange' },
-  { username: 'satryo', name: 'Satryo', role: 'Teknisi Servis', type: 'TEKNISI', color: 'blue' },
-  { username: 'admin', name: 'Admin Kasir', role: 'Administrasi & Kasir', type: 'ADMIN', color: 'purple' },
-  { username: 'sales', name: 'Sales Toko', role: 'Stok Toko & Sales', type: 'SALES', color: 'emerald' }
-];
 
 function LoginForm() {
   const router = useRouter();
@@ -52,21 +43,6 @@ function LoginForm() {
       router.push(redirect);
     } else {
       setErrorMsg(res.error || 'Login gagal, periksa username dan password Anda');
-      setIsLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (quickUsername: string) => {
-    setUsername(quickUsername);
-    setPassword('bct123');
-    setIsLoading(true);
-    setErrorMsg('');
-
-    const res = await login(quickUsername, 'bct123');
-    if (res.success) {
-      router.push(redirect);
-    } else {
-      setErrorMsg(res.error || 'Login gagal');
       setIsLoading(false);
     }
   };
@@ -168,40 +144,6 @@ function LoginForm() {
             )}
           </button>
         </form>
-
-        {/* Quick Demo Login Chips */}
-        <div className="space-y-2 pt-2 border-t border-slate-800">
-          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            <span className="flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              Pilihan Cepat Profil
-            </span>
-            <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-              <Check className="w-3 h-3" /> Siap Digunakan
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {QUICK_USERS.map((qu) => (
-              <button
-                key={qu.username}
-                type="button"
-                onClick={() => handleQuickLogin(qu.username)}
-                className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 transition-all text-left group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white group-hover:text-orange-400 transition-colors">
-                    {qu.name}
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-700 text-slate-300 font-mono font-semibold">
-                    {qu.type}
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-0.5 truncate">{qu.role}</p>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Footer Note */}
         <div className="text-center text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
