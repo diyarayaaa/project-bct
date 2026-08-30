@@ -2,12 +2,24 @@ import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
 
-const dbDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+function getDbPath(): string {
+  // Vercel filesystem is read-only except /tmp — use /tmp on Vercel
+  const isVercel = !!process.env.VERCEL;
+  if (isVercel) {
+    // /tmp is writable on Vercel lambda
+    try {
+      fs.mkdirSync('/tmp/data', { recursive: true });
+    } catch {}
+    return path.join('/tmp', 'bct.sqlite');
+  }
+  const dbDir = path.join(process.cwd(), 'data');
+  try {
+    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+  } catch {}
+  return path.join(dbDir, 'bct.sqlite');
 }
 
-const dbPath = path.join(dbDir, 'bct.sqlite');
+const dbPath = getDbPath();
 
 declare global {
   // eslint-disable-next-line no-var
@@ -24,7 +36,12 @@ export function getDatabase(): DatabaseSync {
   }
 
   if (!dbInstance) {
-    dbInstance = new DatabaseSync(dbPath);
+    try {
+      dbInstance = new DatabaseSync(dbPath);
+    } catch (e) {
+      console.error('[db] DatabaseSync failed — is Node >=22? path:', dbPath, e);
+      throw new Error('Database tidak tersedia di environment ini. Pastikan Node 22+');
+    }
     try {
       dbInstance.exec('PRAGMA busy_timeout = 5000;');
     } catch {
@@ -542,4 +559,10 @@ function seedInitialData(db: DatabaseSync) {
   }
 }
 
-export const db = getDatabase();
+export const db: DatabaseSync = new Proxy({} as DatabaseSync, {
+  get(_target, prop) {
+    const real = getDatabase() as unknown as Record<string | symbol, unknown>;
+    const val = real[prop];
+    return typeof val === 'function' ? (val as (...a: unknown[]) => unknown).bind(real) : val;
+  },
+}) as DatabaseSync;

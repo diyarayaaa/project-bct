@@ -35,7 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 2. Validate with API
       const res = await fetch('/api/auth/me');
-      const data = await res.json();
+      const text = await res.text();
+      let data: { authenticated?: boolean; user?: User } = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { /* ignore non-json */ }
 
       if (data.authenticated && data.user) {
         setUser(data.user);
@@ -77,15 +79,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ username, password })
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'Login gagal' };
+      const text = await res.text();
+      let data: { success?: boolean; error?: string; user?: User } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        return { success: false, error: text ? text.slice(0, 200) : `Server error ${res.status}: respon kosong (cek log Vercel)` };
       }
 
-      setUser(data.user);
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || `Login gagal (${res.status})` };
+      }
+
+      setUser(data.user!);
       localStorage.setItem('bct_auth_user', JSON.stringify(data.user));
-      localStorage.setItem('bct_current_user', data.user.nama_lengkap);
+      localStorage.setItem('bct_current_user', data.user!.nama_lengkap);
 
       return { success: true };
     } catch (err) {
