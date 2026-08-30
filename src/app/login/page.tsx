@@ -103,12 +103,9 @@ function LoginForm() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Kata Sandi (Password)
-              </label>
-              <span className="text-[11px] text-slate-400">Default: bct123</span>
-            </div>
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              Kata Sandi (Password)
+            </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -148,7 +145,7 @@ function LoginForm() {
         {/* Footer Note */}
         <div className="text-center text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Sistem Layanan Internal Best Computel Tasikmalaya</span>
+          <span>Best Computel BCT</span>
         </div>
       </div>
     </div>
