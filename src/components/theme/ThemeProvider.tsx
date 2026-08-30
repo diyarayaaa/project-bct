@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -11,6 +11,10 @@ interface ThemeContextType {
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (open: boolean) => void;
   toggleMobileSidebar: () => void;
+  isSidebarPinned: boolean;
+  setIsSidebarPinned: (pinned: boolean) => void;
+  toggleSidebarPin: () => void;
+  // Legacy aliases
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapse: () => void;
@@ -22,16 +26,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsedState] = useState(false);
+  const [isSidebarPinned, setIsSidebarPinnedState] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = (localStorage.getItem('bct_theme') as Theme) || 'system';
-    setThemeState(savedTheme);
+    try {
+      const savedTheme = (localStorage.getItem('bct_theme') as Theme) || 'system';
+      setThemeState(savedTheme);
 
-    const savedSidebarCollapsed = localStorage.getItem('bct_sidebar_collapsed') === 'true';
-    setIsSidebarCollapsedState(savedSidebarCollapsed);
+      const savedPinned = localStorage.getItem('bct_sidebar_pinned') === 'true';
+      setIsSidebarPinnedState(savedPinned);
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -66,27 +72,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mediaQuery.removeEventListener('change', handler);
   }, [theme, mounted]);
 
-  const setTheme = (newTheme: Theme) => {
+  const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('bct_theme', newTheme);
-  };
+    try {
+      localStorage.setItem('bct_theme', newTheme);
+    } catch {}
+  }, []);
 
-  const toggleMobileSidebar = () => {
+  const toggleMobileSidebar = useCallback(() => {
     setIsMobileSidebarOpen((prev) => !prev);
-  };
+  }, []);
 
-  const setIsSidebarCollapsed = (collapsed: boolean) => {
-    setIsSidebarCollapsedState(collapsed);
-    localStorage.setItem('bct_sidebar_collapsed', String(collapsed));
-  };
+  const setIsSidebarPinned = useCallback((pinned: boolean) => {
+    setIsSidebarPinnedState(pinned);
+    try {
+      localStorage.setItem('bct_sidebar_pinned', String(pinned));
+    } catch {}
+  }, []);
 
-  const toggleSidebarCollapse = () => {
-    setIsSidebarCollapsedState((prev) => {
+  const toggleSidebarPin = useCallback(() => {
+    setIsSidebarPinnedState((prev) => {
       const nextVal = !prev;
-      localStorage.setItem('bct_sidebar_collapsed', String(nextVal));
+      try {
+        localStorage.setItem('bct_sidebar_pinned', String(nextVal));
+      } catch {}
       return nextVal;
     });
-  };
+  }, []);
 
   return (
     <ThemeContext.Provider
@@ -97,9 +109,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         isMobileSidebarOpen,
         setIsMobileSidebarOpen,
         toggleMobileSidebar,
-        isSidebarCollapsed,
-        setIsSidebarCollapsed,
-        toggleSidebarCollapse
+        isSidebarPinned,
+        setIsSidebarPinned,
+        toggleSidebarPin,
+        isSidebarCollapsed: !isSidebarPinned,
+        setIsSidebarCollapsed: (c) => setIsSidebarPinned(!c),
+        toggleSidebarCollapse: toggleSidebarPin
       }}
     >
       {children}

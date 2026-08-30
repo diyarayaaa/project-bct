@@ -1,35 +1,166 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search,
-  PlusCircle,
-  MessageSquare,
-  Truck,
+  Bell,
+  ChevronDown,
   Menu,
   LogOut,
-  PanelLeftClose,
-  PanelLeftOpen
+  ShieldCheck,
+  Check,
+  User,
+  Sun,
+  Moon,
+  Laptop,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Truck,
+  Plus
 } from 'lucide-react';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
+
+interface PageMeta {
+  title: string;
+  subtitle: string;
+}
+
+const PAGE_META_MAP: Record<string, PageMeta> = {
+  '/': {
+    title: 'Dashboard',
+    subtitle: 'Monitoring antrean servis, performa teknisi & status unit'
+  },
+  '/tickets': {
+    title: 'Daftar Service',
+    subtitle: 'Kelola dan lacak semua antrean tiket servis & klaim garansi'
+  },
+  '/tickets/new': {
+    title: 'Form Input Service',
+    subtitle: 'Register a new service ticket for a customer device'
+  },
+  '/surat-jalan': {
+    title: 'Pengiriman Vendor',
+    subtitle: 'Kelola pengiriman unit garansi RMA dan cetak surat jalan'
+  },
+  '/whatsapp': {
+    title: 'Laporan WhatsApp',
+    subtitle: 'Broadcast dan notifikasi otomatis ke customer & sales'
+  },
+  '/master': {
+    title: 'Data Master & Pengaturan',
+    subtitle: 'Kelola database vendor, customer, dan preset opsi servis'
+  },
+  '/logs': {
+    title: 'Audit Log Trail',
+    subtitle: 'Riwayat lengkap aktivitas dan perubahan status sistem'
+  }
+};
+
+const ALL_PROFILES = [
+  { username: 'admin', name: 'Admin', role: 'Administrasi & Kasir', type: 'ADMIN' },
+  { username: 'wandi', name: 'Wandi', role: 'Teknisi Utama', type: 'TEKNISI' },
+  { username: 'satryo', name: 'Satryo', role: 'Teknisi Servis', type: 'TEKNISI' },
+  { username: 'derida', name: 'Derida', role: 'Teknisi', type: 'TEKNISI' },
+  { username: 'anzar', name: 'Anzar', role: 'Teknisi', type: 'TEKNISI' },
+  { username: 'sales', name: 'Sales Toko', role: 'Stok BCT & GHITP', type: 'SALES' }
+];
 
 export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const {
-    toggleMobileSidebar,
-    isSidebarCollapsed,
-    toggleSidebarCollapse
-  } = useTheme();
-  const { user, logout } = useAuth();
+  const { toggleMobileSidebar, theme, setTheme } = useTheme();
+  const { user, logout, switchUser } = useAuth();
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<{ id: string; title: string; time: string; type: string }[]>([]);
+
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fetch quick notification alerts
+  useEffect(() => {
+    const loadNotifs = async () => {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data) {
+          const list = [];
+          if (data.pendingService > 0) {
+            list.push({
+              id: '1',
+              title: `${data.pendingService} Unit menunggu antrean teknisi`,
+              time: 'Perlu dicek',
+              type: 'warning'
+            });
+          }
+          if (data.garansiDiVendor > 0) {
+            list.push({
+              id: '2',
+              title: `${data.garansiDiVendor} Unit klaim garansi di vendor`,
+              time: 'Tracking RMA',
+              type: 'info'
+            });
+          }
+          if (data.serviceSelesaiBulanIni > 0) {
+            list.push({
+              id: '3',
+              title: `${data.serviceSelesaiBulanIni} Servis berhasil diselesaikan bulan ini`,
+              time: 'Update terbaru',
+              type: 'success'
+            });
+          }
+          setNotifications(list);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    loadNotifs();
+  }, []);
 
   // If on login page, don't show topbar
   if (pathname === '/login') return null;
+
+  // Determine current page title and subtitle
+  let currentMeta: PageMeta = {
+    title: 'BCT Service',
+    subtitle: 'Service & Warranty Management System'
+  };
+
+  if (PAGE_META_MAP[pathname]) {
+    currentMeta = PAGE_META_MAP[pathname];
+  } else if (pathname.startsWith('/tickets/')) {
+    currentMeta = {
+      title: 'Detail Tiket Servis',
+      subtitle: 'Informasi lengkap pengerjaan dan status perangkat'
+    };
+  } else if (pathname.startsWith('/surat-jalan/')) {
+    currentMeta = {
+      title: 'Surat Jalan Pengiriman',
+      subtitle: 'Dokumen tanda terima pengiriman barang vendor'
+    };
+  }
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,102 +169,233 @@ export function Topbar() {
     }
   };
 
+  const currentUserName = user?.nama_lengkap || user?.username || 'Admin';
+  const userInitials = (currentUserName.slice(0, 2) || 'AD').toUpperCase();
+
   return (
-    <header className="topbar-container bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 px-3 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4 shadow-xs transition-colors duration-200">
-      {/* Left: Mobile Hamburger & Desktop Sidebar Collapse Toggle */}
-      <div className="flex items-center gap-2">
-        {/* Mobile Toggle Button */}
+    <header className="topbar-container bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 transition-colors duration-200">
+      {/* Left: Hamburger (Mobile) + Page Title & Subtitle */}
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        {/* Mobile Sidebar Hamburger Toggle */}
         <button
           type="button"
           onClick={toggleMobileSidebar}
-          className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
-          aria-label="Buka Menu Samping"
+          className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors shrink-0"
+          aria-label="Buka Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Desktop Collapse / Expand Toggle Button */}
-        <button
-          type="button"
-          onClick={toggleSidebarCollapse}
-          className="hidden lg:flex p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
-          title={isSidebarCollapsed ? 'Lebarkan Menu Samping' : 'Kecilkan / Sembunyikan Menu Samping'}
-          aria-label="Toggle Sidebar Collapse"
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen className="w-4 h-4 text-orange-500" />
-          ) : (
-            <PanelLeftClose className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-          )}
-        </button>
-
-        <Link
-          href="/"
-          className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1"
-        >
-          <span>BCT</span>
-          <span className="text-[10px] px-1 py-0.2 bg-orange-500 text-white rounded font-bold">RMA</span>
-        </Link>
+        {/* Dynamic Page Header & Subtitle */}
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+            {currentMeta.title}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
+            {currentMeta.subtitle}
+          </p>
+        </div>
       </div>
 
-      {/* Global Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xs sm:max-w-md">
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari RMA, Customer, SN..."
-            className="w-full pl-8 sm:pl-9 pr-3 py-1.5 sm:py-2 bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-slate-100 rounded-xl border border-transparent focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-hidden transition-all placeholder:text-slate-400"
-          />
-        </div>
-      </form>
-
-      {/* Right Actions: Theme Toggle, WhatsApp, Surat Jalan, New Ticket, User & Logout */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {/* Theme Toggle (Terang / Gelap / Auto) */}
-        <ThemeToggle />
-
-        <Link
-          href="/whatsapp"
-          className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-colors"
-        >
-          <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden lg:inline">WhatsApp</span>
-        </Link>
-
-        <Link
-          href="/surat-jalan"
-          className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors"
-        >
-          <Truck className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-          <span className="hidden lg:inline">Surat Jalan</span>
-        </Link>
-
-        <Link
-          href="/tickets/new"
-          className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 shadow-md shadow-orange-500/20 rounded-xl transition-all whitespace-nowrap"
-        >
-          <PlusCircle className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Buat Tiket</span>
-          <span className="sm:hidden">Tiket</span>
-        </Link>
-
-        {/* User Pill / Logout on Mobile/Desktop */}
-        {user && (
-          <div className="flex items-center gap-1.5 pl-1">
-            <button
-              type="button"
-              onClick={() => logout()}
-              title={`Keluar dari ${user.nama_lengkap}`}
-              className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-              aria-label="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+      {/* Right: Search Bar, Notifications & User Profile */}
+      <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
+        {/* Search Bar matching screenshot */}
+        <form onSubmit={handleSearchSubmit} className="hidden md:block w-64 lg:w-80">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tickets, customers, or devices..."
+              className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 rounded-xl border border-slate-200 dark:border-slate-700/80 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-hidden transition-all placeholder:text-slate-400"
+            />
           </div>
-        )}
+        </form>
+
+        {/* Notification Bell */}
+        <div className="relative" ref={notifDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
+            aria-label="Notifikasi"
+            title="Notifikasi Sistem"
+          >
+            <Bell className="w-5 h-5" />
+            {/* Red Badge Dot */}
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+          </button>
+
+          {/* Notifications Dropdown */}
+          {isNotificationsOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between px-2.5 py-2 border-b border-slate-100 dark:border-slate-700/60 mb-2">
+                <span className="font-bold text-xs text-slate-900 dark:text-white">Pemberitahuan Servis</span>
+                <span className="text-[10px] bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold px-2 py-0.5 rounded-full">
+                  Live
+                </span>
+              </div>
+
+              <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-400">
+                    Tidak ada notifikasi baru
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-start gap-2.5 text-left text-xs"
+                    >
+                      <div className="p-1 rounded-lg bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5">
+                        <Clock className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-slate-800 dark:text-slate-200 leading-snug">{n.title}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{n.time}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700/60">
+                <Link
+                  href="/tickets"
+                  onClick={() => setIsNotificationsOpen(false)}
+                  className="block text-center text-[11px] font-bold text-cyan-600 dark:text-cyan-400 hover:underline py-1"
+                >
+                  Lihat Semua Tiket Servis →
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* User Profile Pill matching screenshot */}
+        <div className="relative" ref={userDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+            className="flex items-center gap-2.5 p-1 sm:pl-1.5 sm:pr-2.5 sm:py-1 rounded-full sm:rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all text-left"
+          >
+            {/* Initials Circle */}
+            <div className="w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0 tracking-tight">
+              {userInitials}
+            </div>
+
+            {/* Name + Chevron */}
+            <div className="hidden sm:flex items-center gap-1.5 min-w-0">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[100px]">
+                {currentUserName}
+              </span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                  isUserDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </div>
+          </button>
+
+          {/* User Profile Dropdown Menu */}
+          {isUserDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-2">
+              {/* Account Info */}
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-100 dark:border-slate-700/60">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{currentUserName}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">
+                  {user?.role || 'Administrator'} • BCT Service
+                </p>
+              </div>
+
+              {/* Quick Theme Switcher */}
+              <div className="px-2 pt-1">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tema Tampilan</div>
+                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-700/40 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setTheme('light')}
+                    className={`flex items-center justify-center gap-1 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                      theme === 'light'
+                        ? 'bg-white dark:bg-slate-800 text-cyan-600 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    <Sun className="w-3 h-3" />
+                    <span>Light</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('dark')}
+                    className={`flex items-center justify-center gap-1 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                      theme === 'dark'
+                        ? 'bg-white dark:bg-slate-800 text-cyan-400 shadow-2xs'
+                        : 'text-slate-500 hover:text-white'
+                    }`}
+                  >
+                    <Moon className="w-3 h-3" />
+                    <span>Dark</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('system')}
+                    className={`flex items-center justify-center gap-1 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                      theme === 'system'
+                        ? 'bg-white dark:bg-slate-800 text-cyan-600 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    <Laptop className="w-3 h-3" />
+                    <span>Auto</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Switch User Profiles */}
+              <div className="px-2 pt-1">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Ganti Pengguna</div>
+                <div className="space-y-0.5 max-h-40 overflow-y-auto">
+                  {ALL_PROFILES.map((p) => (
+                    <button
+                      key={p.username}
+                      type="button"
+                      onClick={async () => {
+                        await switchUser(p.username);
+                        setIsUserDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${
+                        user?.username === p.username || currentUserName === p.name
+                          ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 font-semibold'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium">{p.name}</div>
+                        <div className="text-[10px] text-slate-400">{p.role}</div>
+                      </div>
+                      {(user?.username === p.username || currentUserName === p.name) && (
+                        <ShieldCheck className="w-3.5 h-3.5 text-cyan-600" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <div className="pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors font-semibold text-left"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar (Logout)</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

@@ -1,291 +1,583 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
-  ClipboardList,
   PlusCircle,
+  ClipboardList,
   Truck,
-  MessageSquareShare,
-  History,
+  MessageSquare,
   Database,
-  Wrench,
-  ShieldCheck,
-  UserCheck,
+  Users,
+  SlidersHorizontal,
+  Printer,
+  HelpCircle,
+  Settings,
   ChevronDown,
-  LogOut,
+  Pin,
+  PinOff,
   X,
-  PanelLeftClose,
-  PanelLeftOpen
+  Boxes,
+  Check,
+  Wrench,
+  Phone,
+  Mail,
+  Moon,
+  Sun,
+  Laptop
 } from 'lucide-react';
 import { useTheme } from '@/components/theme/ThemeProvider';
-import { useAuth } from '@/components/auth/AuthProvider';
 
-const NAVIGATION = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Antrean Tiket', href: '/tickets', icon: ClipboardList },
-  { name: 'Buat Tiket Baru', href: '/tickets/new', icon: PlusCircle },
-  { name: 'Surat Jalan Vendor', href: '/surat-jalan', icon: Truck },
-  { name: 'WhatsApp Hub', href: '/whatsapp', icon: MessageSquareShare },
-  { name: 'Master Data', href: '/master', icon: Database },
-  { name: 'Audit Log Trail', href: '/logs', icon: History }
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+}
+
+interface NavGroup {
+  groupName: string;
+  items: NavItem[];
+}
+
+const NAVIGATION_GROUPS: NavGroup[] = [
+  {
+    groupName: 'UTAMA',
+    items: [
+      { name: 'Dashboard', href: '/', icon: LayoutDashboard }
+    ]
+  },
+  {
+    groupName: 'OPERASIONAL',
+    items: [
+      { name: 'Form Input Service', href: '/tickets/new', icon: PlusCircle },
+      { name: 'Daftar Service', href: '/tickets', icon: ClipboardList },
+      { name: 'Pengiriman Vendor', href: '/surat-jalan', icon: Truck }
+    ]
+  },
+  {
+    groupName: 'KOMUNIKASI',
+    items: [
+      { name: 'Laporan WhatsApp', href: '/whatsapp', icon: MessageSquare }
+    ]
+  },
+  {
+    groupName: 'DATA MASTER',
+    items: [
+      { name: 'Data Master Vendor', href: '/master', icon: Database },
+      { name: 'Master Customer', href: '/master?tab=customer', icon: Users }
+    ]
+  },
+  {
+    groupName: 'PENGATURAN',
+    items: [
+      { name: 'Preset Form Option', href: '/master?tab=keluhan', icon: SlidersHorizontal },
+      { name: 'Cetak Alamat', href: '/surat-jalan?tab=cetak', icon: Printer }
+    ]
+  }
 ];
 
-const ALL_PROFILES = [
-  { username: 'wandi', name: 'Wandi', role: 'Teknisi Utama', type: 'TEKNISI' },
-  { username: 'satryo', name: 'Satryo', role: 'Teknisi Servis', type: 'TEKNISI' },
-  { username: 'derida', name: 'Derida', role: 'Teknisi', type: 'TEKNISI' },
-  { username: 'anzar', name: 'Anzar', role: 'Teknisi', type: 'TEKNISI' },
-  { username: 'admin', name: 'Admin Kasir', role: 'Administrasi & Kasir', type: 'ADMIN' },
-  { username: 'sales', name: 'Sales Toko', role: 'Stok BCT & GHITP', type: 'SALES' }
-];
-
-export function Sidebar() {
+function SidebarNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams ? searchParams.get('tab') : null;
+
   const {
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
-    isSidebarCollapsed,
-    toggleSidebarCollapse
+    isSidebarPinned,
+    toggleSidebarPin,
+    theme,
+    setTheme
   } = useTheme();
-  const { user, logout, switchUser } = useAuth();
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
+  // Hover state for auto-hide
+  const [isHovered, setIsHovered] = useState(false);
+  const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
+  const [activeBranch, setActiveBranch] = useState('BCT SERVICE');
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+      setIsBranchDropdownOpen(false);
+    }, 100);
+  }, []);
 
   // If on login page, don't show sidebar
   if (pathname === '/login') return null;
 
-  const currentUserName = user?.nama_lengkap || 'Wandi';
-  const currentUserRole =
-    user?.spesialisasi ||
-    (user?.role === 'ADMIN'
-      ? 'Administrasi & Logistik'
-      : user?.role === 'SALES'
-      ? 'Stok BCT & GHITP'
-      : 'Teknisi Servis');
+  const isExpanded = isSidebarPinned || isHovered;
 
-  const handleSelectUser = async (username: string) => {
-    await switchUser(username);
-    setIsRoleDropdownOpen(false);
+  // Exact matching helper to prevent multi-highlight bug
+  const isItemActive = (href: string) => {
+    const [targetPath, targetQuery] = href.split('?');
+    const targetParams = new URLSearchParams(targetQuery || '');
+    const targetTab = targetParams.get('tab');
+
+    // 1. Dashboard
+    if (href === '/') {
+      return pathname === '/';
+    }
+
+    // 2. Form Input Service (/tickets/new)
+    if (href === '/tickets/new') {
+      return pathname === '/tickets/new';
+    }
+
+    // 3. Daftar Service (/tickets) - must NOT match /tickets/new
+    if (href === '/tickets') {
+      return pathname === '/tickets' || (pathname.startsWith('/tickets/') && pathname !== '/tickets/new');
+    }
+
+    // 4. Pengiriman Vendor (/surat-jalan)
+    if (href === '/surat-jalan') {
+      return (pathname === '/surat-jalan' && (!currentTab || currentTab !== 'cetak')) || (pathname.startsWith('/surat-jalan/') && !pathname.includes('print'));
+    }
+
+    // 5. Cetak Alamat (/surat-jalan?tab=cetak)
+    if (href === '/surat-jalan?tab=cetak') {
+      return pathname === '/surat-jalan' && currentTab === 'cetak';
+    }
+
+    // 6. Laporan WhatsApp (/whatsapp)
+    if (href === '/whatsapp') {
+      return pathname === '/whatsapp';
+    }
+
+    // 7. Master Data tabs (/master)
+    if (targetPath === '/master') {
+      if (pathname !== '/master') return false;
+      if (targetTab === 'customer') {
+        return currentTab === 'customer';
+      }
+      if (targetTab === 'keluhan') {
+        return currentTab === 'keluhan';
+      }
+      // Default: vendor
+      return !currentTab || currentTab === 'vendor';
+    }
+
+    return pathname === targetPath;
   };
 
-  const sidebarContent = (isMini: boolean) => (
-    <div className="flex flex-col h-full bg-slate-900 dark:bg-slate-950 text-slate-300 select-none transition-all duration-300">
-      {/* Brand Header */}
-      <div
-        className={`p-3.5 sm:p-4 border-b border-slate-800 dark:border-slate-800/80 flex items-center ${
-          isMini ? 'justify-center' : 'justify-between'
-        }`}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 shrink-0">
-            <Wrench className="w-5 h-5 text-white" />
-          </div>
-          {!isMini && (
-            <div className="min-w-0 truncate animate-in fade-in">
-              <h1 className="font-bold text-white tracking-wide text-sm flex items-center gap-1.5 truncate">
-                BEST COMPUTEL
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 shrink-0">
-                  RMA
-                </span>
-              </h1>
-              <p className="text-xs text-slate-400 font-medium truncate">Service & Garansi System</p>
+  const contentJSX = (
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-none">
+      {/* 1. Header / Brand Logo */}
+      <div className="p-3 border-b border-slate-100 dark:border-slate-800/80">
+        <div className="flex items-center justify-between min-h-[36px]">
+          <Link
+            href="/"
+            className={`flex items-center gap-2.5 overflow-hidden ${
+              isExpanded ? 'px-1' : 'justify-center w-full'
+            }`}
+          >
+            {/* Custom Brand Logo Icon */}
+            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-black text-xs tracking-tighter shrink-0 shadow-xs border border-slate-700 dark:border-slate-300">
+              <span className="leading-none text-[10px]">ISO<br />BCT</span>
             </div>
-          )}
-        </div>
 
-        {/* Toggle Collapse on Desktop / Close on Mobile */}
-        <div className="flex items-center">
+            {isExpanded && (
+              <div className="min-w-0 truncate">
+                <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white uppercase whitespace-nowrap">
+                  BCT SERVICE
+                </span>
+              </div>
+            )}
+          </Link>
+
+          {/* Pin / Unpin button when expanded on desktop */}
+          {isExpanded && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsHovered(true);
+                toggleSidebarPin();
+              }}
+              className={`hidden lg:flex p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 ${
+                isSidebarPinned ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50' : ''
+              }`}
+              title={isSidebarPinned ? 'Lepas Sematan (Auto-hide aktif)' : 'Sematkan Menu (Selalu Terbuka)'}
+              aria-label="Toggle Pin Sidebar"
+            >
+              {isSidebarPinned ? <Pin className="w-4 h-4 rotate-45" /> : <PinOff className="w-4 h-4" />}
+            </button>
+          )}
+
+          {/* Close button on Mobile */}
           <button
             type="button"
             onClick={() => setIsMobileSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Tutup Menu"
           >
             <X className="w-5 h-5" />
           </button>
-          {!isMini && (
+        </div>
+
+        {/* Branch / Service Selector Pill */}
+        {isExpanded && (
+          <div className="mt-2.5 relative">
             <button
               type="button"
-              onClick={toggleSidebarCollapse}
-              className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
-              title="Sembunyikan / Kecilkan Menu Samping"
-              aria-label="Kecilkan Sidebar"
+              onClick={() => setIsBranchDropdownOpen(!isBranchDropdownOpen)}
+              className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl transition-colors shadow-2xs"
             >
-              <PanelLeftClose className="w-4 h-4" />
+              <div className="flex items-center gap-2 truncate">
+                <Boxes className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+                <span className="truncate">{activeBranch}</span>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
+                  isBranchDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
             </button>
-          )}
-        </div>
-      </div>
 
-      {/* Expand Button when Mini */}
-      {isMini && (
-        <div className="hidden lg:flex justify-center py-2 border-b border-slate-800/60">
-          <button
-            type="button"
-            onClick={toggleSidebarCollapse}
-            className="p-2 rounded-xl text-slate-400 hover:text-orange-400 hover:bg-slate-800/80 transition-colors"
-            title="Buka / Lebarkan Menu Samping"
-            aria-label="Lebarkan Sidebar"
-          >
-            <PanelLeftOpen className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Navigation Links */}
-      <div className={`flex-1 py-3 px-2 space-y-1.5 overflow-y-auto ${isMini ? 'items-center' : ''}`}>
-        {!isMini && (
-          <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Menu Utama
-          </div>
-        )}
-        {NAVIGATION.map((item) => {
-          const isActive =
-            pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={() => setIsMobileSidebarOpen(false)}
-              title={isMini ? item.name : undefined}
-              className={`flex items-center rounded-xl text-sm font-medium transition-all duration-150 group relative ${
-                isMini
-                  ? 'justify-center p-3 w-12 h-12 mx-auto'
-                  : 'gap-3 px-3.5 py-2.5'
-              } ${
-                isActive
-                  ? 'bg-orange-500 text-white font-semibold shadow-md shadow-orange-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
-              }`}
-            >
-              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
-              {!isMini && <span className="truncate">{item.name}</span>}
-
-              {/* Floating Tooltip when Mini */}
-              {isMini && (
-                <span className="fixed left-20 ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50 whitespace-nowrap">
-                  {item.name}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Active User Switcher & Logout */}
-      <div className="p-2 sm:p-3 border-t border-slate-800 dark:border-slate-800/80 relative">
-        {!isMini && (
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5 flex items-center justify-between">
-            <span>Akun Aktif</span>
-            <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-          title={isMini ? `${currentUserName} (${currentUserRole})` : undefined}
-          className={`w-full flex items-center rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition-colors text-left ${
-            isMini ? 'justify-center p-2' : 'justify-between p-2.5'
-          }`}
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-              {currentUserName.charAt(0)}
-            </div>
-            {!isMini && (
-              <div className="min-w-0 truncate">
-                <p className="text-xs font-bold text-white truncate">{currentUserName}</p>
-                <p className="text-[10px] text-slate-400 truncate">{currentUserRole}</p>
+            {/* Dropdown Options */}
+            {isBranchDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                {['BCT SERVICE', 'BCT GHITP', 'BCT STORE'].map((branch) => (
+                  <button
+                    key={branch}
+                    type="button"
+                    onClick={() => {
+                      setActiveBranch(branch);
+                      setIsBranchDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${
+                      activeBranch === branch
+                        ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+                    }`}
+                  >
+                    <span>{branch}</span>
+                    {activeBranch === branch && <Check className="w-3 h-3 text-cyan-600" />}
+                  </button>
+                ))}
               </div>
             )}
           </div>
-          {!isMini && (
-            <ChevronDown
-              className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${
-                isRoleDropdownOpen ? 'rotate-180' : ''
-              }`}
-            />
+        )}
+      </div>
+
+      {/* 2. Navigation Groups List */}
+      <div className="flex-1 py-2 px-2 overflow-y-auto overflow-x-hidden space-y-3.5">
+        {NAVIGATION_GROUPS.map((group) => (
+          <div key={group.groupName} className="space-y-1">
+            {/* Section Header */}
+            {isExpanded ? (
+              <div className="px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
+                {group.groupName}
+              </div>
+            ) : (
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800/80 mx-1" />
+            )}
+
+            {/* Group Nav Items */}
+            {group.items.map((item) => {
+              const active = isItemActive(item.href);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  title={!isExpanded ? item.name : undefined}
+                  className={`flex items-center rounded-xl text-xs transition-colors duration-100 group relative ${
+                    isExpanded
+                      ? 'gap-3 px-3 py-2 font-medium'
+                      : 'justify-center p-2.5 w-10 h-10 mx-auto'
+                  } ${
+                    active
+                      ? 'bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-semibold border border-cyan-300/80 dark:border-cyan-700/60 shadow-2xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                  }`}
+                >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 ${
+                      active
+                        ? 'text-cyan-600 dark:text-cyan-400'
+                        : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+                    }`}
+                  />
+
+                  {isExpanded && <span className="truncate whitespace-nowrap">{item.name}</span>}
+
+                  {/* Floating tooltip on compact/collapsed mode */}
+                  {!isExpanded && (
+                    <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                      {item.name}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* 3. Bottom Pinned Items: Support & Settings */}
+      <div className="p-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
+        {/* Support Button */}
+        <button
+          type="button"
+          onClick={() => setIsSupportModalOpen(true)}
+          title={!isExpanded ? 'Support & Bantuan' : undefined}
+          className={`w-full flex items-center rounded-xl text-xs transition-colors duration-100 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 group ${
+            isExpanded ? 'gap-3 px-3 py-2 font-medium' : 'justify-center p-2.5 w-10 h-10 mx-auto'
+          }`}
+        >
+          <HelpCircle className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white" />
+          {isExpanded && <span className="whitespace-nowrap">Support</span>}
+          {!isExpanded && (
+            <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+              Support
+            </span>
           )}
         </button>
 
-        {/* Dropdown Menu */}
-        {isRoleDropdownOpen && (
-          <div
-            className={`absolute bottom-16 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 space-y-0.5 animate-in fade-in slide-in-from-bottom-2 duration-150 ${
-              isMini ? 'left-16 w-56' : 'left-3 right-3'
-            }`}
-          >
-            <div className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-700/50 mb-1 flex items-center justify-between">
-              <span>Ganti Pengguna</span>
-            </div>
-            {ALL_PROFILES.map((p) => (
-              <button
-                key={p.username}
-                type="button"
-                onClick={() => handleSelectUser(p.username)}
-                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${
-                  user?.username === p.username || currentUserName === p.name
-                    ? 'bg-orange-500 text-white font-semibold'
-                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
-              >
-                <div>
-                  <div className="font-medium">{p.name}</div>
-                  <div className="text-[10px] opacity-75">{p.role}</div>
-                </div>
-                {(user?.username === p.username || currentUserName === p.name) && (
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                )}
-              </button>
-            ))}
-
-            <div className="pt-1 mt-1 border-t border-slate-700/50">
-              <button
-                type="button"
-                onClick={() => logout()}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors font-semibold text-left"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Keluar (Logout)</span>
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Settings Button */}
+        <button
+          type="button"
+          onClick={() => setIsSettingsModalOpen(true)}
+          title={!isExpanded ? 'Pengaturan' : undefined}
+          className={`w-full flex items-center rounded-xl text-xs transition-colors duration-100 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 group ${
+            isExpanded ? 'gap-3 px-3 py-2 font-medium' : 'justify-center p-2.5 w-10 h-10 mx-auto'
+          }`}
+        >
+          <Settings className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white" />
+          {isExpanded && <span className="whitespace-nowrap">Settings</span>}
+          {!isExpanded && (
+            <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+              Settings
+            </span>
+          )}
+        </button>
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Desktop Sidebar (Collapsible: w-20 in mini mode, w-64 in full mode) */}
+      {/* Desktop Floating/Expanding Sidebar */}
       <aside
-        className={`sidebar-container hidden lg:flex shrink-0 min-h-screen border-r border-slate-800 dark:border-slate-800/80 transition-all duration-300 ${
-          isSidebarCollapsed ? 'w-20' : 'w-64'
+        className={`sidebar-container hidden lg:block fixed top-0 left-0 bottom-0 z-40 transition-[width,box-shadow] duration-200 ease-out will-change-[width] ${
+          isExpanded
+            ? 'w-64 shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/10'
+            : 'w-16 shadow-xs'
         }`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        {sidebarContent(isSidebarCollapsed)}
+        {contentJSX}
       </aside>
 
-      {/* Mobile Drawer (Visible on < lg when open) */}
+      {/* Mobile Drawer */}
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop Overlay */}
           <div
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-in fade-in"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
+          <div className="relative w-64 max-w-[80vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-150">
+            {contentJSX}
+          </div>
+        </div>
+      )}
 
-          {/* Drawer Container */}
-          <div className="relative w-72 max-w-[80vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
-            {sidebarContent(false)}
+      {/* Support Modal */}
+      {isSupportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95 duration-150 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400">
+                  <HelpCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Support & Bantuan</h3>
+                  <p className="text-xs text-slate-500">Best Computel Service Desk</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSupportModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                <p className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Wrench className="w-4 h-4 text-cyan-600" />
+                  BCT Service & RMA Management v1.0
+                </p>
+                <p className="text-slate-500 leading-relaxed">
+                  Sistem otomatisasi pencatatan tiket servis, tracking garansi vendor, print surat jalan, dan broadcast WhatsApp.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                  <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-white">Hotline IT Support</p>
+                    <p className="text-slate-500">+62 812-3456-7890 (Wandi / Satryo)</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                  <Mail className="w-4 h-4 text-cyan-600 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-white">Email Helpdesk</p>
+                    <p className="text-slate-500">support@bestcomputel.com</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsSupportModalOpen(false)}
+                className="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95 duration-150 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Pengaturan Tampilan</h3>
+                  <p className="text-xs text-slate-500">Kustomisasi tema & perilaku menu</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSettingsModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Tema Tampilan */}
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Mode Warna Tema
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTheme('light')}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors ${
+                      theme === 'light'
+                        ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 font-semibold'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Sun className="w-4 h-4 text-amber-500" />
+                    <span>Terang</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('dark')}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors ${
+                      theme === 'dark'
+                        ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-400 font-semibold'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Moon className="w-4 h-4 text-indigo-400" />
+                    <span>Gelap</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('system')}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors ${
+                      theme === 'system'
+                        ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 font-semibold'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Laptop className="w-4 h-4 text-slate-400" />
+                    <span>Otomatis</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto-Hide Toggle */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">Sematkan Menu Samping (Pin)</p>
+                  <p className="text-[11px] text-slate-500">Kunci menu agar tetap terbuka atau aktifkan auto-hide</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleSidebarPin()}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    isSidebarPinned
+                      ? 'bg-cyan-500 text-white shadow-xs'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {isSidebarPinned ? 'Terselip/Terkunci' : 'Auto-Hide (Aktif)'}
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsSettingsModalOpen(false)}
+                className="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-xl text-xs hover:opacity-90 transition-opacity"
+              >
+                Simpan & Selesai
+              </button>
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <Suspense fallback={null}>
+      <SidebarNav />
+    </Suspense>
   );
 }
