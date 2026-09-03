@@ -24,12 +24,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Teks keluhan wajib diisi' }, { status: 400 });
     }
 
-    const stmt = db.prepare('INSERT INTO master_keluhan (teks_keluhan) VALUES (?)');
+    const stmt = db.prepare('INSERT OR IGNORE INTO master_keluhan (teks_keluhan) VALUES (?)');
     const info = stmt.run(teks_keluhan);
+
+    // Fetch existing or newly inserted record
+    const getStmt = db.prepare('SELECT * FROM master_keluhan WHERE teks_keluhan = ?');
+    const existing = getStmt.get(teks_keluhan) as MasterKeluhan;
 
     return NextResponse.json({
       success: true,
-      keluhan: {
+      keluhan: existing || {
         id: info.lastInsertRowid,
         teks_keluhan
       }
