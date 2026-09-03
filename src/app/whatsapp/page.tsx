@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   MessageSquare,
   Copy,
@@ -22,13 +22,33 @@ import {
 } from '@/lib/whatsapp-formatter';
 
 function WhatsAppHubContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'operational';
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'sales' ? 'sales' : tabParam === 'quick' ? 'quick' : 'operational';
   const initialTicketId = searchParams.get('ticket_id') || '';
 
-  const [activeTab, setActiveTab] = useState<'operational' | 'sales' | 'quick'>(
-    initialTab === 'sales' ? 'sales' : initialTab === 'quick' ? 'quick' : 'operational'
-  );
+  const [activeTab, setActiveTab] = useState<'operational' | 'sales' | 'quick'>(initialTab);
+
+  // Sync tab state when URL searchParams changes (e.g. navigation from Sidebar)
+  useEffect(() => {
+    if (tabParam === 'sales') {
+      setActiveTab('sales');
+    } else if (tabParam === 'quick') {
+      setActiveTab('quick');
+    } else {
+      setActiveTab('operational');
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: 'operational' | 'sales' | 'quick') => {
+    setActiveTab(tab);
+    if (tab === 'operational') {
+      router.replace('/whatsapp', { scroll: false });
+    } else {
+      router.replace(`/whatsapp?tab=${tab}`, { scroll: false });
+    }
+  };
 
   // Operational Report State
   const [operationalText, setOperationalText] = useState('');
@@ -111,7 +131,7 @@ function WhatsAppHubContent() {
   const salesWaUrl = createWhatsAppUrl(SALES_WA_NUMBER, salesText);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -119,16 +139,13 @@ function WhatsAppHubContent() {
             <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-500" />
             WhatsApp Automation Hub
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Generator laporan operasional grup WA, notifikasi stok sales, dan pesan pelanggan.
-          </p>
         </div>
       </div>
 
       {/* Main Tabs */}
       <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-2xl w-full sm:w-fit overflow-x-auto">
         <button
-          onClick={() => setActiveTab('operational')}
+          onClick={() => handleTabChange('operational')}
           className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === 'operational'
               ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-md'
@@ -136,11 +153,11 @@ function WhatsAppHubContent() {
           }`}
         >
           <Building2 className="w-4 h-4 text-orange-400 dark:text-white" />
-          <span>Laporan Operasional (Kamis)</span>
+          <span>Laporan WA Mingguan</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('sales')}
+          onClick={() => handleTabChange('sales')}
           className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === 'sales'
               ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-md'
@@ -148,11 +165,11 @@ function WhatsAppHubContent() {
           }`}
         >
           <Boxes className="w-4 h-4 text-purple-400 dark:text-white" />
-          <span>Laporan Sales ({SALES_WA_DISPLAY})</span>
+          <span>Laporan WA Garansi Stock</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('quick')}
+          onClick={() => handleTabChange('quick')}
           className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === 'quick'
               ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-md'
@@ -160,7 +177,7 @@ function WhatsAppHubContent() {
           }`}
         >
           <Users className="w-4 h-4 text-emerald-400 dark:text-white" />
-          <span>Quick Dispatch</span>
+          <span>Laporan WA Customer</span>
         </button>
       </div>
 

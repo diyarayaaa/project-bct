@@ -252,9 +252,6 @@ export function DynamicTicketForm({
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {isEditMode ? `Edit Tiket [${nomorLayanan}]` : 'Buat Tiket Servis & RMA Baru'}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Formulir terpadu penerimaan servis reguler dan klaim garansi vendor.
-            </p>
           </div>
         </div>
 

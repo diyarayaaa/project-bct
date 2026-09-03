@@ -6,52 +6,84 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // 1. Total Service Aktif ('PROSES SERVICE')
-    const activeStmt = db.prepare(`SELECT COUNT(*) as count FROM tickets WHERE status = 'PROSES SERVICE'`);
-    const totalServiceAktif = (activeStmt.get() as { count: number }).count;
-
-    // 2. Pending Service ('PENDING SERVICE')
-    const pendingStmt = db.prepare(`SELECT COUNT(*) as count FROM tickets WHERE status = 'PENDING SERVICE'`);
-    const pendingService = (pendingStmt.get() as { count: number }).count;
-
-    // 3. Barang Belum Diambil ('SELESAI BELUM DIAMBIL')
-    const readyStmt = db.prepare(`SELECT COUNT(*) as count FROM tickets WHERE status = 'SELESAI BELUM DIAMBIL'`);
-    const barangBelumDiambil = (readyStmt.get() as { count: number }).count;
-
-    // 4. Garansi di Vendor ('PROSES GARANSI' / 'ALIH SERVICE' yang punya distributor_vendor)
-    const vendorStmt = db.prepare(`
+    // 1. BARANG MASUK HARI INI: IN(JENIS RMA, {"SERVICE", "GARANSI"}) AND TGL MASUK = TODAY()
+    const q1 = db.prepare(`
       SELECT COUNT(*) as count FROM tickets 
-      WHERE (status = 'PROSES GARANSI' OR status = 'ALIH SERVICE')
-    `);
-    const garansiDiVendor = (vendorStmt.get() as { count: number }).count;
+      WHERE jenis_layanan IN ('SERVICE', 'GARANSI') 
+        AND DATE(tanggal_masuk) = DATE('now', 'localtime')
+    `).get() as { count: number };
 
-    // 5. Stok Toko Ready (Customer like STOCK BCT or GHITP and status SELESAI BELUM DIAMBIL or SELESAI & DIAMBIL)
-    const stockStmt = db.prepare(`
+    // 2. SERVICE ON PROGRES: JENIS RMA = "SERVICE" AND (ISBLANK(STATUS) OR STATUS = "PROSES SERVICE" OR STATUS = "PENDING SERVICE")
+    const q2 = db.prepare(`
       SELECT COUNT(*) as count FROM tickets 
-      WHERE (UPPER(nama_customer) LIKE '%STOCK BCT%' OR UPPER(nama_customer) LIKE '%GHITP%')
-        AND (status = 'SELESAI BELUM DIAMBIL' OR status = 'SELESAI & DIAMBIL')
-    `);
-    const stokTokoReady = (stockStmt.get() as { count: number }).count;
+      WHERE jenis_layanan = 'SERVICE' 
+        AND (status IS NULL OR TRIM(status) = '' OR status = 'PROSES SERVICE' OR status = 'PENDING SERVICE')
+    `).get() as { count: number };
+
+    // 3. BARANG DI VENDOR: (GARANSI AND PROSES GARANSI) OR (SERVICE AND ALIH SERVICE)
+    const q3 = db.prepare(`
+      SELECT COUNT(*) as count FROM tickets 
+      WHERE (jenis_layanan = 'GARANSI' AND status = 'PROSES GARANSI')
+         OR (jenis_layanan = 'SERVICE' AND status = 'ALIH SERVICE')
+    `).get() as { count: number };
+
+    // 4. GARANSI MASUK MINGGU INI: JENIS RMA = "GARANSI" AND WEEKNUM(TGL MASUK) = WEEKNUM(TODAY()) AND YEAR(TGL MASUK) = YEAR(TODAY())
+    const q4 = db.prepare(`
+      SELECT COUNT(*) as count FROM tickets 
+      WHERE jenis_layanan = 'GARANSI' 
+        AND strftime('%W', tanggal_masuk) = strftime('%W', 'now', 'localtime') 
+        AND strftime('%Y', tanggal_masuk) = strftime('%Y', 'now', 'localtime')
+    `).get() as { count: number };
+
+    // 5. GARANSI BELUM DIKIRIM: JENIS RMA = "GARANSI" AND ISBLANK(STATUS)
+    const q5 = db.prepare(`
+      SELECT COUNT(*) as count FROM tickets 
+      WHERE jenis_layanan = 'GARANSI' 
+        AND (status IS NULL OR TRIM(status) = '' OR status = 'BELUM DIKIRIM' OR status = 'PROSES MASUK')
+    `).get() as { count: number };
+
+    // 6. BARANG BELUM DIAMBIL: STATUS = "SELESAI NUNGGU DIAMBIL"
+    const q6 = db.prepare(`
+      SELECT COUNT(*) as count FROM tickets 
+      WHERE status = 'SELESAI NUNGGU DIAMBIL' 
+         OR status = 'SELESAI BELUM DIAMBIL' 
+         OR status LIKE '%NUNGGU DIAMBIL%'
+    `).get() as { count: number };
+
+    // 7. GARANSI SELESAI: JENIS RMA = "GARANSI" AND STATUS = "SELESAI & DIAMBIL"
+    const q7 = db.prepare(`
+      SELECT COUNT(*) as count FROM tickets 
+      WHERE jenis_layanan = 'GARANSI' 
+        AND status = 'SELESAI & DIAMBIL'
+    `).get() as { count: number };
+
+    // 8. SERVICE SELESAI: JENIS RMA = "SERVICE" AND STATUS = "SELESAI & DIAMBIL"
+    const q8 = db.prepare(`
+      SELECT COUNT(*) as count FROM tickets 
+      WHERE jenis_layanan = 'SERVICE' 
+        AND status = 'SELESAI & DIAMBIL'
+    `).get() as { count: number };
 
     // Total Tiket
     const totalStmt = db.prepare(`SELECT COUNT(*) as count FROM tickets`);
     const totalTiket = (totalStmt.get() as { count: number }).count;
 
-    // Selesai Bulan Ini
-    const selesaiBulanIniStmt = db.prepare(`
-      SELECT COUNT(*) as count FROM tickets 
-      WHERE status = 'SELESAI & DIAMBIL'
-    `);
-    const serviceSelesaiBulanIni = (selesaiBulanIniStmt.get() as { count: number }).count;
-
     const stats: DashboardStats = {
-      totalServiceAktif,
-      pendingService,
-      barangBelumDiambil,
-      garansiDiVendor,
-      stokTokoReady,
+      barangMasukHariIni: q1.count,
+      serviceOnProgress: q2.count,
+      barangDiVendor: q3.count,
+      garansiMasukMingguIni: q4.count,
+      garansiBelumDikirim: q5.count,
+      barangBelumDiambil: q6.count,
+      garansiSelesai: q7.count,
+      serviceSelesai: q8.count,
       totalTiket,
-      serviceSelesaiBulanIni
+      // Backward compatibility
+      totalServiceAktif: q2.count,
+      pendingService: 0,
+      garansiDiVendor: q3.count,
+      stokTokoReady: 0,
+      serviceSelesaiBulanIni: q8.count
     };
 
     return NextResponse.json(stats);

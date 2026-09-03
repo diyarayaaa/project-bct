@@ -59,7 +59,9 @@ const NAVIGATION_GROUPS: NavGroup[] = [
   {
     groupName: 'KOMUNIKASI',
     items: [
-      { name: 'Laporan WhatsApp', href: '/whatsapp', icon: MessageSquare }
+      { name: 'Laporan WA Mingguan', href: '/whatsapp', icon: MessageSquare },
+      { name: 'Laporan WA Garansi Stock', href: '/whatsapp?tab=sales', icon: Boxes },
+      { name: 'Laporan WA Customer', href: '/whatsapp?tab=quick', icon: Users }
     ]
   },
   {
@@ -155,9 +157,17 @@ function SidebarNav() {
       return pathname === '/surat-jalan' && currentTab === 'cetak';
     }
 
-    // 6. Laporan WhatsApp (/whatsapp)
-    if (href === '/whatsapp') {
-      return pathname === '/whatsapp';
+    // 6. Laporan WhatsApp tabs (/whatsapp)
+    if (targetPath === '/whatsapp') {
+      if (pathname !== '/whatsapp') return false;
+      if (targetTab === 'sales') {
+        return currentTab === 'sales';
+      }
+      if (targetTab === 'quick') {
+        return currentTab === 'quick';
+      }
+      // Default: operational (Laporan WA Mingguan)
+      return !currentTab || currentTab === 'operational';
     }
 
     // 7. Master Data tabs (/master)
@@ -176,211 +186,241 @@ function SidebarNav() {
     return pathname === targetPath;
   };
 
-  const contentJSX = (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-none">
-      {/* 1. Header / Brand Logo */}
-      <div className="p-3 border-b border-slate-100 dark:border-slate-800/80">
-        <div className="flex items-center justify-between min-h-[36px]">
-          <Link
-            href="/"
-            className={`flex items-center gap-2.5 overflow-hidden ${isExpanded ? 'px-1' : 'justify-center w-full'
-              }`}
-          >
-            {/* Logo Best Computel */}
-            <img
-              src="/logo.png"
-              alt="Best Computel"
-              className={`shrink-0 object-contain ${isExpanded ? 'h-8 w-auto max-w-[148px]' : 'h-8 w-8'}`}
-            />
+  const renderSidebarContent = (isMobile = false) => {
+    const expanded = isMobile ? true : isExpanded;
 
-            {isExpanded && (
-              <div className="min-w-0 truncate hidden">
-                <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white uppercase whitespace-nowrap">
-                  BCT SERVICE
-                </span>
-              </div>
-            )}
-          </Link>
-
-          {/* Pin / Unpin button when expanded on desktop */}
-          {isExpanded && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsHovered(true);
-                toggleSidebarPin();
+    return (
+      <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 select-none">
+        {/* 1. Header / Brand Logo */}
+        <div className="p-3 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center justify-between min-h-[36px]">
+            <Link
+              href="/"
+              onClick={() => {
+                if (isMobile) setIsMobileSidebarOpen(false);
               }}
-              className={`hidden lg:flex p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 ${isSidebarPinned ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50' : ''
-                }`}
-              title={isSidebarPinned ? 'Lepas Sematan (Auto-hide aktif)' : 'Sematkan Menu (Selalu Terbuka)'}
-              aria-label="Toggle Pin Sidebar"
+              className={`flex items-center gap-2.5 overflow-hidden ${
+                expanded ? 'px-1' : 'justify-center w-full'
+              }`}
             >
-              {isSidebarPinned ? <Pin className="w-4 h-4 rotate-45" /> : <PinOff className="w-4 h-4" />}
-            </button>
-          )}
+              {/* Logo Best Computel */}
+              <img
+                src="/logo.png"
+                alt="Best Computel"
+                className="h-7 w-7 shrink-0 object-contain"
+              />
 
-          {/* Close button on Mobile */}
-          <button
-            type="button"
-            onClick={() => setIsMobileSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="Tutup Menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+              {expanded && (
+                <div className="min-w-0 truncate">
+                  <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white uppercase leading-none block">
+                    BCT SERVICE
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium leading-tight">
+                    Service & RMA System
+                  </span>
+                </div>
+              )}
+            </Link>
+
+            {/* Pin / Unpin button when expanded on desktop */}
+            {!isMobile && expanded && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsHovered(true);
+                  toggleSidebarPin();
+                }}
+                className={`hidden lg:flex p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 ${
+                  isSidebarPinned ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50' : ''
+                }`}
+                title={isSidebarPinned ? 'Lepas Sematan (Auto-hide aktif)' : 'Sematkan Menu (Selalu Terbuka)'}
+                aria-label="Toggle Pin Sidebar"
+              >
+                {isSidebarPinned ? <Pin className="w-4 h-4 rotate-45" /> : <PinOff className="w-4 h-4" />}
+              </button>
+            )}
+
+            {/* Close button on Mobile */}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Tutup Menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Branch / Service Selector Pill */}
+          {expanded && (
+            <div className="mt-2.5 relative">
+              <button
+                type="button"
+                onClick={() => setIsBranchDropdownOpen(!isBranchDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl transition-colors shadow-2xs"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Boxes className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+                  <span className="truncate">{activeBranch}</span>
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
+                    isBranchDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Options */}
+              {isBranchDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  {['BCT SERVICE', 'BCT GHITP', 'BCT STORE'].map((branch) => (
+                    <button
+                      key={branch}
+                      type="button"
+                      onClick={() => {
+                        setActiveBranch(branch);
+                        setIsBranchDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${
+                        activeBranch === branch
+                          ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 font-semibold'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+                      }`}
+                    >
+                      <span>{branch}</span>
+                      {activeBranch === branch && <Check className="w-3 h-3 text-cyan-600" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Branch / Service Selector Pill */}
-        {isExpanded && (
-          <div className="mt-2.5 relative">
-            <button
-              type="button"
-              onClick={() => setIsBranchDropdownOpen(!isBranchDropdownOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl transition-colors shadow-2xs"
-            >
-              <div className="flex items-center gap-2 truncate">
-                <Boxes className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-                <span className="truncate">{activeBranch}</span>
-              </div>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${isBranchDropdownOpen ? 'rotate-180' : ''
-                  }`}
-              />
-            </button>
+        {/* 2. Navigation Groups List */}
+        <div className="flex-1 py-2 px-2 overflow-y-auto overflow-x-hidden space-y-3">
+          {NAVIGATION_GROUPS.map((group) => (
+            <div key={group.groupName} className="space-y-1">
+              {/* Section Header */}
+              {expanded ? (
+                <div className="px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
+                  {group.groupName}
+                </div>
+              ) : (
+                <div className="my-1 border-t border-slate-100 dark:border-slate-800/80 mx-1" />
+              )}
 
-            {/* Dropdown Options */}
-            {isBranchDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                {['BCT SERVICE', 'BCT GHITP', 'BCT STORE'].map((branch) => (
-                  <button
-                    key={branch}
-                    type="button"
+              {/* Group Nav Items */}
+              {group.items.map((item) => {
+                const active = isItemActive(item.href);
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
                     onClick={() => {
-                      setActiveBranch(branch);
-                      setIsBranchDropdownOpen(false);
+                      if (isMobile) setIsMobileSidebarOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${activeBranch === branch
-                        ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
-                      }`}
-                  >
-                    <span>{branch}</span>
-                    {activeBranch === branch && <Check className="w-3 h-3 text-cyan-600" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 2. Navigation Groups List */}
-      <div className="flex-1 py-2 px-2 overflow-y-auto overflow-x-hidden space-y-3.5">
-        {NAVIGATION_GROUPS.map((group) => (
-          <div key={group.groupName} className="space-y-1">
-            {/* Section Header */}
-            {isExpanded ? (
-              <div className="px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
-                {group.groupName}
-              </div>
-            ) : (
-              <div className="my-1 border-t border-slate-100 dark:border-slate-800/80 mx-1" />
-            )}
-
-            {/* Group Nav Items */}
-            {group.items.map((item) => {
-              const active = isItemActive(item.href);
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  title={!isExpanded ? item.name : undefined}
-                  className={`flex items-center rounded-xl text-xs transition-colors duration-100 group relative ${isExpanded
-                      ? 'gap-3 px-3 py-2 font-medium'
-                      : 'justify-center p-2.5 w-10 h-10 mx-auto'
-                    } ${active
-                      ? 'bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-semibold border border-cyan-300/80 dark:border-cyan-700/60 shadow-2xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                    title={!expanded ? item.name : undefined}
+                    className={`flex items-center rounded-xl text-xs transition-colors duration-100 group relative ${
+                      expanded
+                        ? 'gap-2.5 px-3 py-2 font-medium'
+                        : 'justify-center p-2.5 w-10 h-10 mx-auto'
+                    } ${
+                      active
+                        ? 'bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-semibold border border-cyan-300/80 dark:border-cyan-700/60 shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
                     }`}
-                >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${active
-                        ? 'text-cyan-600 dark:text-cyan-400'
-                        : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+                  >
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${
+                        active
+                          ? 'text-cyan-600 dark:text-cyan-400'
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
                       }`}
-                  />
+                    />
 
-                  {isExpanded && <span className="truncate whitespace-nowrap">{item.name}</span>}
+                    {expanded && <span className="truncate whitespace-nowrap">{item.name}</span>}
 
-                  {/* Floating tooltip on compact/collapsed mode */}
-                  {!isExpanded && (
-                    <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
-                      {item.name}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+                    {/* Floating tooltip on compact/collapsed mode on desktop */}
+                    {!expanded && (
+                      <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                        {item.name}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </div>
 
-      {/* 3. Bottom Pinned Items: Support & Settings */}
-      <div className="p-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
-        {/* Support Button */}
-        <button
-          type="button"
-          onClick={() => setIsSupportModalOpen(true)}
-          title={!isExpanded ? 'Support & Bantuan' : undefined}
-          className={`w-full flex items-center rounded-xl text-xs transition-colors duration-100 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 group ${isExpanded ? 'gap-3 px-3 py-2 font-medium' : 'justify-center p-2.5 w-10 h-10 mx-auto'
+        {/* 3. Bottom Pinned Items: Support & Settings */}
+        <div className="p-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
+          {/* Support Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsSupportModalOpen(true);
+              if (isMobile) setIsMobileSidebarOpen(false);
+            }}
+            title={!expanded ? 'Support & Bantuan' : undefined}
+            className={`w-full flex items-center rounded-xl text-xs transition-colors duration-100 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 group ${
+              expanded ? 'gap-2.5 px-3 py-2 font-medium' : 'justify-center p-2.5 w-10 h-10 mx-auto'
             }`}
-        >
-          <HelpCircle className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white" />
-          {isExpanded && <span className="whitespace-nowrap">Support</span>}
-          {!isExpanded && (
-            <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
-              Support
-            </span>
-          )}
-        </button>
+          >
+            <HelpCircle className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white" />
+            {expanded && <span className="whitespace-nowrap">Support & Bantuan</span>}
+            {!expanded && (
+              <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                Support
+              </span>
+            )}
+          </button>
 
-        {/* Settings Button */}
-        <button
-          type="button"
-          onClick={() => setIsSettingsModalOpen(true)}
-          title={!isExpanded ? 'Pengaturan' : undefined}
-          className={`w-full flex items-center rounded-xl text-xs transition-colors duration-100 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 group ${isExpanded ? 'gap-3 px-3 py-2 font-medium' : 'justify-center p-2.5 w-10 h-10 mx-auto'
+          {/* Settings Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsSettingsModalOpen(true);
+              if (isMobile) setIsMobileSidebarOpen(false);
+            }}
+            title={!expanded ? 'Pengaturan' : undefined}
+            className={`w-full flex items-center rounded-xl text-xs transition-colors duration-100 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 group ${
+              expanded ? 'gap-2.5 px-3 py-2 font-medium' : 'justify-center p-2.5 w-10 h-10 mx-auto'
             }`}
-        >
-          <Settings className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white" />
-          {isExpanded && <span className="whitespace-nowrap">Settings</span>}
-          {!isExpanded && (
-            <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
-              Settings
-            </span>
-          )}
-        </button>
+          >
+            <Settings className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white" />
+            {expanded && <span className="whitespace-nowrap">Pengaturan Tampilan</span>}
+            {!expanded && (
+              <span className="fixed left-16 ml-2.5 px-2.5 py-1 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                Settings
+              </span>
+            )}
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <>
       {/* Desktop Floating/Expanding Sidebar */}
       <aside
-        className={`sidebar-container hidden lg:block fixed top-0 left-0 bottom-0 z-40 transition-[width,box-shadow] duration-200 ease-out will-change-[width] ${isExpanded
+        className={`sidebar-container hidden lg:block fixed top-0 left-0 bottom-0 z-40 transition-[width,box-shadow] duration-200 ease-out will-change-[width] ${
+          isExpanded
             ? 'w-64 shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/10'
             : 'w-16 shadow-xs'
-          }`}
+        }`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {contentJSX}
+        {renderSidebarContent(false)}
       </aside>
 
       {/* Mobile Drawer */}
@@ -390,8 +430,8 @@ function SidebarNav() {
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
-          <div className="relative w-64 max-w-[80vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-150">
-            {contentJSX}
+          <div className="relative w-64 max-w-[75vw] sm:w-72 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-150">
+            {renderSidebarContent(true)}
           </div>
         </div>
       )}

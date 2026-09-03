@@ -141,7 +141,7 @@ export default function SuratJalanPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -149,9 +149,6 @@ export default function SuratJalanPage() {
             <Truck className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500" />
             Manajemen Surat Jalan Vendor
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Pengelompokan barang garansi & alih servis untuk pengiriman distributor mingguan.
-          </p>
         </div>
 
         <button

@@ -117,11 +117,19 @@ export interface AuditLog {
 }
 
 export interface DashboardStats {
-  totalServiceAktif: number;
-  pendingService: number;
+  barangMasukHariIni: number;
+  serviceOnProgress: number;
+  barangDiVendor: number;
+  garansiMasukMingguIni: number;
+  garansiBelumDikirim: number;
   barangBelumDiambil: number;
-  garansiDiVendor: number;
-  stokTokoReady: number;
-  totalTiket: number;
-  serviceSelesaiBulanIni: number;
+  garansiSelesai: number;
+  serviceSelesai: number;
+  totalTiket?: number;
+  // Backward compatibility fields
+  totalServiceAktif?: number;
+  pendingService?: number;
+  garansiDiVendor?: number;
+  stokTokoReady?: number;
+  serviceSelesaiBulanIni?: number;
 }

@@ -178,7 +178,7 @@ function MasterDataContent() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Tab Navigation Pill Bar */}
       <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2">

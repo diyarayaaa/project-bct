@@ -14,12 +14,16 @@ import {
   Trash2,
   CheckSquare,
   Square,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide
 } from 'lucide-react';
 import { StatusBadge, ServiceTypeBadge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { CustomerReceiptModal } from '@/components/prints/CustomerReceiptModal';
 import { ShippingLabelModal } from '@/components/prints/ShippingLabelModal';
+import { ImportSpreadsheetModal } from '@/components/modals/ImportSpreadsheetModal';
 import { Ticket } from '@/types';
 import { TEKNISI_LIST, STATUS_LIST } from '@/lib/constants';
 import { formatDateIndo } from '@/lib/whatsapp-formatter';
@@ -35,6 +39,7 @@ function TicketsContent() {
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedTeknisi, setSelectedTeknisi] = useState('ALL');
   const [selectedJenis, setSelectedJenis] = useState('ALL');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
 
   // Selection state for Bulk Actions
@@ -42,6 +47,7 @@ function TicketsContent() {
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Modals state
   const [selectedReceiptTicket, setSelectedReceiptTicket] = useState<Ticket | null>(null);
@@ -55,6 +61,8 @@ function TicketsContent() {
       if (selectedStatus !== 'ALL') params.append('status', selectedStatus);
       if (selectedTeknisi !== 'ALL') params.append('teknisi', selectedTeknisi);
       if (selectedJenis !== 'ALL') params.append('jenis_layanan', selectedJenis);
+      params.append('sortBy', 'nomor_layanan');
+      params.append('order', sortOrder);
 
       const res = await fetch(`/api/tickets?${params.toString()}`);
       const data = await res.json();
@@ -66,7 +74,15 @@ function TicketsContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, selectedStatus, selectedTeknisi, selectedJenis]);
+  }, [search, selectedStatus, selectedTeknisi, selectedJenis, sortOrder]);
+
+  const sortedTickets = React.useMemo(() => {
+    return [...tickets].sort((a, b) => {
+      return sortOrder === 'desc'
+        ? b.nomor_layanan.localeCompare(a.nomor_layanan)
+        : a.nomor_layanan.localeCompare(b.nomor_layanan);
+    });
+  }, [tickets, sortOrder]);
 
   useEffect(() => {
     fetchTickets();
@@ -126,25 +142,33 @@ function TicketsContent() {
   const isPartiallySelected = selectedTicketIds.length > 0 && !isAllSelected;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 w-full pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             Antrean & Riwayat Tiket Servis
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Daftar lengkap seluruh tiket servis reguler, klaim garansi vendor, dan stok internal.
-          </p>
         </div>
 
-        <Link
-          href="/tickets/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 shadow-md shadow-orange-500/20 rounded-xl transition-all self-start sm:self-auto"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Buat Tiket Baru</span>
-        </Link>
+        <div className="flex items-center gap-2 sm:gap-3 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Import Spreadsheet</span>
+          </button>
+
+          <Link
+            href="/tickets/new"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 shadow-md shadow-orange-500/20 rounded-xl transition-all self-start sm:self-auto"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Buat Tiket Baru</span>
+          </Link>
+        </div>
       </div>
 
       {/* Floating / Sticky Bulk Action Bar (Visible when 1 or more tickets are selected) */}
@@ -240,6 +264,25 @@ function TicketsContent() {
             </select>
 
             <button
+              type="button"
+              onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all shrink-0 cursor-pointer active:scale-95"
+              title={sortOrder === 'desc' ? 'Klik untuk urutkan Terlama ke Terbaru' : 'Klik untuk urutkan Terbaru ke Terlama'}
+            >
+              {sortOrder === 'desc' ? (
+                <>
+                  <ArrowDownWideNarrow className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Terbaru ⬇</span>
+                </>
+              ) : (
+                <>
+                  <ArrowUpNarrowWide className="w-3.5 h-3.5 text-orange-500" />
+                  <span>Terlama ⬆</span>
+                </>
+              )}
+            </button>
+
+            <button
               onClick={fetchTickets}
               className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors shrink-0"
               title="Refresh"
@@ -293,7 +336,20 @@ function TicketsContent() {
                     aria-label="Pilih Semua Tiket"
                   />
                 </th>
-                <th className="px-3 sm:px-4 py-3 sm:py-3.5">No RMA</th>
+                <th
+                  onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+                  className="px-3 sm:px-4 py-3 sm:py-3.5 cursor-pointer select-none hover:text-slate-900 dark:hover:text-white transition-colors"
+                  title="Klik untuk mengurutkan No RMA"
+                >
+                  <div className="inline-flex items-center gap-1.5">
+                    <span>No RMA</span>
+                    {sortOrder === 'desc' ? (
+                      <ArrowDownWideNarrow className="w-3.5 h-3.5 text-orange-500" />
+                    ) : (
+                      <ArrowUpNarrowWide className="w-3.5 h-3.5 text-orange-500" />
+                    )}
+                  </div>
+                </th>
                 <th className="px-3 sm:px-4 py-3 sm:py-3.5">Tanggal</th>
                 <th className="px-3 sm:px-4 py-3 sm:py-3.5">Customer</th>
                 <th className="px-3 sm:px-4 py-3 sm:py-3.5">Perangkat & SN</th>
@@ -307,18 +363,18 @@ function TicketsContent() {
               {isLoading ? (
                 <tr>
                   <td colSpan={9} className="text-center py-12 text-slate-400 font-medium">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-orange-500" />
-                    Memuat tiket...
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-300" />
+                    Memuat data tiket...
                   </td>
                 </tr>
-              ) : tickets.length === 0 ? (
+              ) : sortedTickets.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-slate-400">
-                    Tidak ada tiket yang cocok dengan kriteria pencarian.
+                  <td colSpan={9} className="text-center py-12 text-slate-400 font-medium">
+                    Tidak ada tiket yang ditemukan
                   </td>
                 </tr>
               ) : (
-                tickets.map((t) => {
+                sortedTickets.map((t) => {
                   const isStock =
                     t.nama_customer.toUpperCase().includes('STOCK BCT') ||
                     t.nama_customer.toUpperCase().includes('GHITP');
@@ -505,6 +561,13 @@ function TicketsContent() {
           tickets={[selectedLabelTicket]}
         />
       )}
+
+      {/* Import Spreadsheet Modal */}
+      <ImportSpreadsheetModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => fetchTickets()}
+      />
     </div>
   );
 }

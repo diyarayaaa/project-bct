@@ -19,13 +19,23 @@ export async function GET(request: NextRequest) {
     let query = 'SELECT * FROM tickets WHERE 1=1';
     const params: unknown[] = [];
 
-    // Filter berdasarkan tab
-    if (tab === 'on_progress') {
-      query += " AND status = 'PROSES SERVICE'";
-    } else if (tab === 'waiting_vendor') {
-      query += " AND (status = 'PROSES GARANSI' OR status = 'ALIH SERVICE')";
-    } else if (tab === 'ready_pickup') {
-      query += " AND status = 'SELESAI BELUM DIAMBIL'";
+    // Filter berdasarkan tab / 8 KPI Appsheet
+    if (tab === 'masuk_hari_ini') {
+      query += " AND jenis_layanan IN ('SERVICE', 'GARANSI') AND DATE(tanggal_masuk) = DATE('now', 'localtime')";
+    } else if (tab === 'service_on_progress' || tab === 'on_progress') {
+      query += " AND jenis_layanan = 'SERVICE' AND (status IS NULL OR TRIM(status) = '' OR status = 'PROSES SERVICE' OR status = 'PENDING SERVICE')";
+    } else if (tab === 'barang_di_vendor' || tab === 'waiting_vendor') {
+      query += " AND ((jenis_layanan = 'GARANSI' AND status = 'PROSES GARANSI') OR (jenis_layanan = 'SERVICE' AND status = 'ALIH SERVICE'))";
+    } else if (tab === 'garansi_minggu_ini') {
+      query += " AND jenis_layanan = 'GARANSI' AND strftime('%W', tanggal_masuk) = strftime('%W', 'now', 'localtime') AND strftime('%Y', tanggal_masuk) = strftime('%Y', 'now', 'localtime')";
+    } else if (tab === 'garansi_belum_dikirim') {
+      query += " AND jenis_layanan = 'GARANSI' AND (status IS NULL OR TRIM(status) = '' OR status = 'BELUM DIKIRIM' OR status = 'PROSES MASUK')";
+    } else if (tab === 'barang_belum_diambil' || tab === 'ready_pickup') {
+      query += " AND (status = 'SELESAI NUNGGU DIAMBIL' OR status = 'SELESAI BELUM DIAMBIL' OR status LIKE '%NUNGGU DIAMBIL%')";
+    } else if (tab === 'garansi_selesai') {
+      query += " AND jenis_layanan = 'GARANSI' AND status = 'SELESAI & DIAMBIL'";
+    } else if (tab === 'service_selesai') {
+      query += " AND jenis_layanan = 'SERVICE' AND status = 'SELESAI & DIAMBIL'";
     } else if (tab === 'internal_stock') {
       query += " AND (UPPER(nama_customer) LIKE '%STOCK BCT%' OR UPPER(nama_customer) LIKE '%GHITP%')";
     }
@@ -61,7 +71,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    query += ' ORDER BY created_at DESC';
+    const sortBy = searchParams.get('sortBy') || 'nomor_layanan';
+    const order = searchParams.get('order')?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    if (sortBy === 'nomor_layanan') {
+      query += ` ORDER BY nomor_layanan ${order}`;
+    } else if (sortBy === 'tanggal_masuk') {
+      query += ` ORDER BY tanggal_masuk ${order}, nomor_layanan ${order}`;
+    } else {
+      query += ` ORDER BY created_at ${order}, nomor_layanan ${order}`;
+    }
 
     const stmt = db.prepare(query);
     const rawTickets = stmt.all(...params) as Record<string, unknown>[];

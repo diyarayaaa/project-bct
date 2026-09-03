@@ -6,7 +6,7 @@ interface MetricCardProps {
   value: number | string;
   subtitle?: string;
   icon: LucideIcon;
-  colorScheme: 'blue' | 'amber' | 'emerald' | 'purple' | 'orange';
+  colorScheme: 'blue' | 'amber' | 'emerald' | 'purple' | 'orange' | 'rose' | 'teal' | 'indigo' | 'sky';
   onClick?: () => void;
   isActive?: boolean;
 }
@@ -50,6 +50,30 @@ export function MetricCard({
       border: 'border-orange-200 dark:border-orange-900/50',
       activeBorder: 'border-orange-500 dark:border-orange-500 ring-2 ring-orange-500/20',
       pill: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
+    },
+    rose: {
+      bg: 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400',
+      border: 'border-rose-200 dark:border-rose-900/50',
+      activeBorder: 'border-rose-500 dark:border-rose-500 ring-2 ring-rose-500/20',
+      pill: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+    },
+    teal: {
+      bg: 'bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400',
+      border: 'border-teal-200 dark:border-teal-900/50',
+      activeBorder: 'border-teal-500 dark:border-teal-500 ring-2 ring-teal-500/20',
+      pill: 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+    },
+    indigo: {
+      bg: 'bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400',
+      border: 'border-indigo-200 dark:border-indigo-900/50',
+      activeBorder: 'border-indigo-500 dark:border-indigo-500 ring-2 ring-indigo-500/20',
+      pill: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'
+    },
+    sky: {
+      bg: 'bg-sky-500/10 text-sky-600 dark:bg-sky-500/20 dark:text-sky-400',
+      border: 'border-sky-200 dark:border-sky-900/50',
+      activeBorder: 'border-sky-500 dark:border-sky-500 ring-2 ring-sky-500/20',
+      pill: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
     }
   }[colorScheme];
 

@@ -58,6 +58,14 @@ body {
   background: #64748b;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Print Stylesheet */
 @media print {
   body {

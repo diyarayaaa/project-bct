@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search,
@@ -69,9 +69,11 @@ const ALL_PROFILES = [
   { username: 'sales', name: 'Sales Toko', role: 'Stok BCT & GHITP', type: 'SALES' }
 ];
 
-export function Topbar() {
+function TopbarContent() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams ? searchParams.get('tab') : null;
   const { toggleMobileSidebar, theme, setTheme } = useTheme();
   const { user, logout, switchUser } = useAuth();
 
@@ -148,7 +150,24 @@ export function Topbar() {
     subtitle: 'Service & Warranty Management System'
   };
 
-  if (PAGE_META_MAP[pathname]) {
+  if (pathname === '/whatsapp') {
+    if (currentTab === 'sales') {
+      currentMeta = {
+        title: 'Laporan WA Garansi Stock',
+        subtitle: 'Broadcast notifikasi stok unit ready & garansi ke sales toko'
+      };
+    } else if (currentTab === 'quick') {
+      currentMeta = {
+        title: 'Laporan WA Customer',
+        subtitle: 'Kirim tanda terima & notifikasi servis selesai langsung ke pelanggan'
+      };
+    } else {
+      currentMeta = {
+        title: 'Laporan WA Mingguan',
+        subtitle: 'Laporan rekapitulasi servis & status pengerjaan mingguan teknisi'
+      };
+    }
+  } else if (PAGE_META_MAP[pathname]) {
     currentMeta = PAGE_META_MAP[pathname];
   } else if (pathname.startsWith('/tickets/')) {
     currentMeta = {
@@ -173,7 +192,7 @@ export function Topbar() {
   const userInitials = (currentUserName.slice(0, 2) || 'AD').toUpperCase();
 
   return (
-    <header className="topbar-container bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4 transition-colors duration-200">
+    <header className="topbar-container bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 sticky top-0 z-30 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 transition-colors duration-200">
       {/* Left: Hamburger (Mobile) + Page Title & Subtitle */}
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {/* Mobile Sidebar Hamburger Toggle */}
@@ -191,7 +210,7 @@ export function Topbar() {
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
             {currentMeta.title}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
+          <p className="hidden sm:block text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
             {currentMeta.subtitle}
           </p>
         </div>
@@ -398,5 +417,13 @@ export function Topbar() {
         </div>
       </div>
     </header>
+  );
+}
+
+export function Topbar() {
+  return (
+    <Suspense fallback={null}>
+      <TopbarContent />
+    </Suspense>
   );
 }
