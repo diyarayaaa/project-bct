@@ -30,6 +30,7 @@ import {
   Check
 } from 'lucide-react';
 import Link from 'next/link';
+import { AppSheetEnumList } from '@/components/forms/AppSheetEnumList';
 
 interface DynamicTicketFormProps {
   initialData?: Partial<Ticket>;
@@ -65,8 +66,6 @@ export function DynamicTicketForm({
       .map((s) => s.trim())
       .filter(Boolean);
   });
-  const [customKeluhanInput, setCustomKeluhanInput] = useState('');
-  const [isSavingCustomKeluhan, setIsSavingCustomKeluhan] = useState(false);
 
   const [kelengkapan, setKelengkapan] = useState<string[]>(
     Array.isArray(initialData?.kelengkapan) ? initialData.kelengkapan : ['Unit', 'Charger']
@@ -99,14 +98,6 @@ export function DynamicTicketForm({
   // Master Data
   const [vendors, setVendors] = useState<MasterVendor[]>([]);
   const [keluhanList, setKeluhanList] = useState<MasterKeluhan[]>([]);
-  const [keluhanSearch, setKeluhanSearch] = useState('');
-
-  // Filtered Keluhan List
-  const filteredKeluhanList = React.useMemo(() => {
-    if (!keluhanSearch.trim()) return keluhanList;
-    const q = keluhanSearch.toLowerCase();
-    return keluhanList.filter((k) => k.teks_keluhan.toLowerCase().includes(q));
-  }, [keluhanList, keluhanSearch]);
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,53 +153,6 @@ export function DynamicTicketForm({
     if (customKelengkapanInput.trim() && !kelengkapan.includes(customKelengkapanInput.trim())) {
       setKelengkapan([...kelengkapan, customKelengkapanInput.trim()]);
       setCustomKelengkapanInput('');
-    }
-  };
-
-  // EnumList Toggle & Auto-Save for Keluhan
-  const toggleKeluhan = (item: string) => {
-    setSelectedKeluhan((prev) => {
-      const updated = prev.includes(item)
-        ? prev.filter((k) => k !== item)
-        : [...prev, item];
-      setKeluhan(updated.join(', '));
-      return updated;
-    });
-  };
-
-  const handleAddCustomKeluhan = async () => {
-    const trimmed = customKeluhanInput.trim();
-    if (!trimmed) return;
-
-    // 1. Tambahkan langsung ke EnumList yang dipilih
-    if (!selectedKeluhan.includes(trimmed)) {
-      const updated = [...selectedKeluhan, trimmed];
-      setSelectedKeluhan(updated);
-      setKeluhan(updated.join(', '));
-    }
-    setCustomKeluhanInput('');
-
-    // 2. Otomatis simpan ke master_keluhan database
-    setIsSavingCustomKeluhan(true);
-    try {
-      const res = await fetch('/api/master/keluhan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teks_keluhan: trimmed })
-      });
-      const data = await res.json();
-      if (!data.error) {
-        // Refresh master keluhan list
-        const listRes = await fetch('/api/master/keluhan');
-        const listData = await listRes.json();
-        if (listData.keluhan) {
-          setKeluhanList(listData.keluhan);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to auto-save custom keluhan to master:', err);
-    } finally {
-      setIsSavingCustomKeluhan(false);
     }
   };
 
@@ -539,140 +483,37 @@ export function DynamicTicketForm({
           </div>
         </div>
 
-        {/* Keluhan Kerusakan (EnumList) */}
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <span>Keluhan Kerusakan (EnumList) *</span>
-                {selectedKeluhan.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 text-[10px] font-extrabold">
-                    {selectedKeluhan.length} dipilih
-                  </span>
-                )}
-              </label>
-            </div>
-
-            {/* Live Search Input */}
-            <div className="flex items-center gap-1.5">
-              <input
-                type="text"
-                value={keluhanSearch}
-                onChange={(e) => setKeluhanSearch(e.target.value)}
-                placeholder="Cari keluhan master..."
-                className="px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-orange-500 w-36 sm:w-56"
-              />
-              {keluhanSearch && (
-                <button
-                  type="button"
-                  onClick={() => setKeluhanSearch('')}
-                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* 1. Selected EnumList Chips Area */}
-          {selectedKeluhan.length > 0 ? (
-            <div className="p-3 bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/80 rounded-2xl flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-bold text-orange-900 dark:text-orange-300 mr-1 shrink-0">
-                Terpilih:
-              </span>
-              {selectedKeluhan.map((item) => (
-                <span
-                  key={item}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-orange-600 text-white text-xs font-bold shadow-xs animate-in fade-in"
-                >
-                  <Check className="w-3.5 h-3.5 text-orange-200 shrink-0" />
-                  <span>{item}</span>
-                  <button
-                    type="button"
-                    onClick={() => toggleKeluhan(item)}
-                    className="ml-1 hover:bg-orange-700 rounded-full w-4 h-4 flex items-center justify-center transition-colors cursor-pointer text-xs"
-                    title="Hapus keluhan"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedKeluhan([]);
-                  setKeluhan('');
-                }}
-                className="text-[11px] text-orange-700 dark:text-orange-400 hover:underline font-bold ml-auto cursor-pointer"
-              >
-                Hapus Semua
-              </button>
-            </div>
-          ) : (
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl text-xs text-slate-400">
-              Belum ada keluhan yang dipilih. Silakan klik opsi master di bawah atau ketik keluhan baru.
-            </div>
-          )}
-
-          {/* 2. Selectable EnumList Master Options Grid */}
-          <div className="max-h-52 overflow-y-auto p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-            {filteredKeluhanList.length === 0 ? (
-              <p className="text-xs text-slate-400 p-2 text-center">
-                Keluhan tidak ditemukan di master. Anda bisa langsung ketik di bawah untuk menambahkan keluhan baru.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {filteredKeluhanList.map((k) => {
-                  const isSelected = selectedKeluhan.includes(k.teks_keluhan);
-                  return (
-                    <button
-                      key={k.id}
-                      type="button"
-                      onClick={() => toggleKeluhan(k.teks_keluhan)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
-                        isSelected
-                          ? 'bg-slate-900 dark:bg-orange-600 text-white border-slate-900 dark:border-orange-600 shadow-xs'
-                          : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-orange-50 dark:hover:bg-slate-700 hover:border-orange-300'
-                      }`}
-                    >
-                      {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-orange-400 dark:text-white shrink-0" />
-                      ) : (
-                        <span className="text-slate-400 font-bold">+</span>
-                      )}
-                      <span>{k.teks_keluhan}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 3. Add Custom Keluhan Input (Auto-saves to Master) */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={customKeluhanInput}
-              onChange={(e) => setCustomKeluhanInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddCustomKeluhan();
+        {/* Keluhan Kerusakan (AppSheet EnumList Dropdown) */}
+        <AppSheetEnumList
+          label="Keluhan Kerusakan"
+          selectedValues={selectedKeluhan}
+          options={keluhanList}
+          onChange={(newValues) => {
+            setSelectedKeluhan(newValues);
+            setKeluhan(newValues.join(', '));
+          }}
+          onAddNewOption={async (newText) => {
+            try {
+              const res = await fetch('/api/master/keluhan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ teks_keluhan: newText })
+              });
+              const data = await res.json();
+              if (!data.error) {
+                const listRes = await fetch('/api/master/keluhan');
+                const listData = await listRes.json();
+                if (listData.keluhan) {
+                  setKeluhanList(listData.keluhan);
                 }
-              }}
-              placeholder="+ Ketik keluhan baru di sini (otomatis masuk pilihan & tersimpan ke Master)..."
-              className="flex-1 px-3.5 py-2 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
-            />
-            <button
-              type="button"
-              onClick={handleAddCustomKeluhan}
-              disabled={isSavingCustomKeluhan || !customKeluhanInput.trim()}
-              className="px-4 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-orange-600 dark:hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
-            >
-              {isSavingCustomKeluhan ? 'Menyimpan...' : '+ Tambah & Simpan'}
-            </button>
-          </div>
-        </div>
+              }
+            } catch (err) {
+              console.error('Failed to save custom keluhan to master:', err);
+            }
+          }}
+          required
+          placeholder="Pilih atau cari keluhan kerusakan..."
+        />
 
         {/* Dynamic Kelengkapan Checklist */}
         <div>
