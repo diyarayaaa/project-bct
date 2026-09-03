@@ -48,7 +48,9 @@ export function DynamicTicketForm({
   const [jenisLayanan, setJenisLayanan] = useState<JenisLayanan>(initialData?.jenis_layanan || 'SERVICE');
 
   // Customer
-  const [namaCustomer, setNamaCustomer] = useState(initialData?.nama_customer || '');
+  const [namaCustomer, setNamaCustomer] = useState(
+    initialData?.nama_customer || (isEditMode ? '' : 'TN/NY. ')
+  );
   const [noHp, setNoHp] = useState(initialData?.no_hp || '');
 
   // Device
@@ -87,6 +89,14 @@ export function DynamicTicketForm({
   // Master Data
   const [vendors, setVendors] = useState<MasterVendor[]>([]);
   const [keluhanList, setKeluhanList] = useState<MasterKeluhan[]>([]);
+  const [keluhanSearch, setKeluhanSearch] = useState('');
+
+  // Filtered Keluhan List
+  const filteredKeluhanList = React.useMemo(() => {
+    if (!keluhanSearch.trim()) return keluhanList;
+    const q = keluhanSearch.toLowerCase();
+    return keluhanList.filter((k) => k.teks_keluhan.toLowerCase().includes(q));
+  }, [keluhanList, keluhanSearch]);
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -474,24 +484,41 @@ export function DynamicTicketForm({
 
         {/* Keluhan & Quick Selectors */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Keluhan Kerusakan *
             </label>
-            <span className="text-[11px] text-slate-400">Klik pilihan cepat:</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={keluhanSearch}
+                onChange={(e) => setKeluhanSearch(e.target.value)}
+                placeholder="Cari keluhan master..."
+                className="px-2.5 py-0.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-orange-500 w-36 sm:w-48"
+              />
+              <span className="text-[11px] text-slate-400">
+                ({filteredKeluhanList.length} opsi)
+              </span>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 mb-2.5 max-h-24 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-            {keluhanList.map((k) => (
-              <button
-                key={k.id}
-                type="button"
-                onClick={() => setKeluhan(keluhan ? `${keluhan}, ${k.teks_keluhan}` : k.teks_keluhan)}
-                className="text-[11px] px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 font-medium transition-all"
-              >
-                + {k.teks_keluhan}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-1.5 mb-2.5 max-h-32 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+            {filteredKeluhanList.length === 0 ? (
+              <p className="text-xs text-slate-400 p-1">
+                Keluhan tidak ditemukan di master. Anda bisa langsung ketik di bawah, dan sistem akan <strong>otomatis menyimpannya ke master</strong>.
+              </p>
+            ) : (
+              filteredKeluhanList.map((k) => (
+                <button
+                  key={k.id}
+                  type="button"
+                  onClick={() => setKeluhan(keluhan ? `${keluhan}, ${k.teks_keluhan}` : k.teks_keluhan)}
+                  className="text-[11px] px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 font-medium transition-all cursor-pointer"
+                >
+                  + {k.teks_keluhan}
+                </button>
+              ))
+            )}
           </div>
 
           <textarea
@@ -500,6 +527,11 @@ export function DynamicTicketForm({
             onChange={(e) => setKeluhan(e.target.value)}
             className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
           />
+          <p className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+            <span>
+              💡 <em>Ketik bebas keluhan kerusakan di atas. Setiap keluhan baru yang belum ada akan otomatis disimpan ke database Master Keluhan saat disimpan.</em>
+            </span>
+          </p>
         </div>
 
         {/* Dynamic Kelengkapan Checklist */}

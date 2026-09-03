@@ -125,6 +125,23 @@ export async function POST(request: NextRequest) {
     const nama_barang = body.nama_barang?.trim() || '';
     const serial_number = body.serial_number?.trim() || '';
     const keluhan = body.keluhan?.trim() || '';
+
+    // Auto-save new keluhan into master_keluhan
+    if (keluhan) {
+      try {
+        const parts = keluhan.split(/[,;\n]+/).map((s: string) => s.trim()).filter((s: string) => s.length > 2);
+        const insertKeluhan = db.prepare('INSERT OR IGNORE INTO master_keluhan (teks_keluhan) VALUES (?)');
+        for (const p of parts) {
+          insertKeluhan.run(p);
+        }
+        if (parts.length === 0) {
+          insertKeluhan.run(keluhan);
+        }
+      } catch (kErr) {
+        console.error('Failed to auto-save keluhan to master_keluhan:', kErr);
+      }
+    }
+
     const kelengkapan = JSON.stringify(Array.isArray(body.kelengkapan) ? body.kelengkapan : []);
     const estimasi_selesai = body.estimasi_selesai || null;
     const teknisi = body.teknisi || 'Wandi';

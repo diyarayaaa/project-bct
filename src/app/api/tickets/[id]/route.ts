@@ -117,6 +117,22 @@ export async function PUT(
       updated_at: new Date().toISOString().replace('T', ' ').slice(0, 19)
     };
 
+    // Auto-save updated keluhan into master_keluhan
+    if (updatedData.keluhan) {
+      try {
+        const parts = updatedData.keluhan.split(/[,;\n]+/).map((s: string) => s.trim()).filter((s: string) => s.length > 2);
+        const insertKeluhan = db.prepare('INSERT OR IGNORE INTO master_keluhan (teks_keluhan) VALUES (?)');
+        for (const p of parts) {
+          insertKeluhan.run(p);
+        }
+        if (parts.length === 0) {
+          insertKeluhan.run(updatedData.keluhan);
+        }
+      } catch (kErr) {
+        console.error('Failed to auto-save keluhan to master_keluhan:', kErr);
+      }
+    }
+
     const updateStmt = db.prepare(`
       UPDATE tickets SET
         nomor_layanan = ?,

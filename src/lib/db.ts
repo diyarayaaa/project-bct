@@ -235,33 +235,81 @@ function seedInitialData(db: DatabaseSync) {
     }
 
     // Seed Master Keluhan
-    const countKeluhanStmt = db.prepare('SELECT COUNT(*) as count FROM master_keluhan');
-    const resultKeluhan = countKeluhanStmt.get() as { count: number };
+    const insertKeluhan = db.prepare(`
+      INSERT OR IGNORE INTO master_keluhan (teks_keluhan)
+      VALUES (?)
+    `);
 
-    if (resultKeluhan.count === 0) {
-      const insertKeluhan = db.prepare(`
-        INSERT INTO master_keluhan (teks_keluhan)
-        VALUES (?)
-      `);
+    const keluhanList = [
+      'Mati Total (No Power)',
+      'Mati Total / Tidak Bisa Dicas',
+      'Nyala Mati / Restart Sendiri / Suka Mati Mendadak',
+      'Mati Setelah Lama Tidak Digunakan',
+      'Kena Tumpahan Cairan / Korosi / Serangga',
+      'Konslet / Bau Hangus / Keluar Asap',
+      'Komponen Mesin Terbakar / Elko Pecah',
+      'Pin Processor Bengkok / Socket Rusak',
+      'Slot RAM Tidak Berfungsi / Error',
+      'Settingan BIOS Reset / Baterai CMOS Habis',
+      'Pas Booting Langsung Mati',
+      'Klaim Garansi Servis Mesin',
+      'No Display / Layar Blank Gelap',
+      'Layar Pecah / Retak (Ganti LCD)',
+      'Layar Bergaris / Layar Kedip',
+      'Layar Vignette / Bintik / White Spot',
+      'Display Intermiten / Kadang Nyala Kadang Mati',
+      'Tampilan Artefak / Glitch Grafis',
+      'Cek Display & Benchmark VGA',
+      'Klaim Garansi Layar / LCD',
+      'SSD / HDD Tidak Terdeteksi (No Disk Detected)',
+      'SSD / HDD Rusak / Bad Sector / Health 0%',
+      'SSD / HDD Health Turun / Sering Freeze',
+      'Storage Corrupt / Tidak Bisa Dipartisi',
+      'Tidak Bisa Format / Gagal Resize Partisi',
+      'Kapasitas Terbaca 0 MB / Storage RAW',
+      'Drive / Partisi Penuh (Cleanup Storage)',
+      'Instal Ulang Windows (Standar + Aplikasi)',
+      'Instal Windows 10 (Aktivasi + Software)',
+      'Instal Windows 11 (Aktivasi + Software)',
+      'Instal Microsoft Office & Software Tambahan',
+      'Update OS / Perbaikan Gagal Windows Update',
+      'BSOD (Blue Screen of Death)',
+      'Gagal Booting / Masuk BIOS Terus / No Bootable Device',
+      'Stuck di Automatic Repair / Bootloop',
+      'Sistem Lambat / Lemot / Sering Not Responding',
+      'Unlock BitLocker / Reset Password Windows',
+      'Cek & Scan Virus / Malware',
+      'Keyboard Error / Tombol Tidak Berfungsi / Mengetik Sendiri',
+      'Ganti Keyboard Baru',
+      'Touchpad / Trackpad Mati / Tidak Responsif',
+      'Tombol Power Tidak Berfungsi',
+      'Baterai Drop / Tidak Tahan Lama',
+      'Baterai Not Charging / Dicas Tidak Nambah',
+      'Ganti Baterai Baru',
+      'Adaptor / Charger Lemah / Rusak',
+      'Overheat / Suhu Panas & Mati Sendiri',
+      'Repasta Processor & Cleaning Debu Total',
+      'Kipas / Fan Berisik / Bunyi Kasar',
+      'Kipas / Fan Mati / Macet (Fan Error)',
+      'Speaker Mati Total / Suara Hilang',
+      'Speaker Pecah / Sembrang / Noise',
+      'Port Audio Jack 3.5mm Tidak Berfungsi',
+      'Mikrofon / Webcam Tidak Berfungsi',
+      'Wi-Fi Tidak Terdeteksi / Suka Putus (Luplep)',
+      'Port LAN (Ethernet) Tidak Berfungsi / Lampu Indikator Mati',
+      'Port USB Rusak / Tidak Mendeteksi Perangkat',
+      'Port HDMI / Type-C Display Tidak Berfungsi',
+      'Upgrade SSD (Pemasangan + Kloning / OS)',
+      'Upgrade RAM / Tambah Kapasitas Memori',
+      'Rakit PC Baru + Cable Management + Instal OS',
+      'Ganti Power Supply (PSU)',
+      'Ganti Casing PC + Manajemen Fan',
+      'General Check-up Hardware & Performa',
+      'General Check-up Software & Sistem'
+    ];
 
-      const keluhanList = [
-        'Mati Total (No Power)',
-        'No Display / Layar Gelap',
-        'Lambat / Lemot / Hang',
-        'Keyboard Eror / Mengetik Sendiri',
-        'Baterai Drop / Not Charging',
-        'Layar Bergaris / LCD Rusak',
-        'Overheat / Suhu Panas & Mati Sendiri',
-        'Gagal Booting / Masuk BIOS Terus',
-        'Hasil Print Putus-Putus',
-        'Engsel Layar Patah / Rusak',
-        'Harddisk / SSD Tidak Terbaca',
-        'Install Ulang OS + Software Standar'
-      ];
-
-      for (const k of keluhanList) {
-        insertKeluhan.run(k);
-      }
+    for (const k of keluhanList) {
+      insertKeluhan.run(k);
     }
   } catch (err) {
     console.error('Seed error ignored:', err);
