@@ -408,9 +408,6 @@ export function DynamicTicketForm({
               onChange={(e) => setNamaCustomer(e.target.value)}
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
-              Prefix <span className="font-mono font-semibold">TN/NY. </span> akan ditambahkan secara otomatis jika belum diketik.
-            </p>
           </div>
 
           {/* Nomor WhatsApp */}
