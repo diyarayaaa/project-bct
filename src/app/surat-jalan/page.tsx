@@ -327,7 +327,6 @@ export default function SuratJalanPage() {
                 type="text"
                 value={ekspedisi}
                 onChange={(e) => setEkspedisi(e.target.value)}
-                placeholder="Travel Cipaganti / JNE / J&T"
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
               />
             </div>
@@ -340,7 +339,6 @@ export default function SuratJalanPage() {
                 type="text"
                 value={noResi}
                 onChange={(e) => setNoResi(e.target.value)}
-                placeholder="Contoh: JNE882190391"
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
               />
             </div>
@@ -401,7 +399,6 @@ export default function SuratJalanPage() {
               type="text"
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
-              placeholder="Contoh: Titip ke supir, cek segel kardus."
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             />
           </div>

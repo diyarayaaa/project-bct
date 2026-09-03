@@ -302,7 +302,6 @@ function WhatsAppHubContent() {
                 type="text"
                 value={searchTicket}
                 onChange={(e) => setSearchTicket(e.target.value)}
-                placeholder="Cari RMA / Customer..."
                 className="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-hidden"
               />
             </div>

@@ -229,7 +229,6 @@ function MasterDataContent() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari data master..."
             className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 text-xs rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-hidden focus:border-cyan-500"
           />
         </div>
@@ -380,7 +379,6 @@ function MasterDataContent() {
               type="text"
               value={namaVendor}
               onChange={(e) => setNamaVendor(e.target.value)}
-              placeholder="Contoh: PT. ASIA RAYA COM BDG"
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             />
           </div>
@@ -408,7 +406,6 @@ function MasterDataContent() {
               rows={3}
               value={alamatLengkap}
               onChange={(e) => setAlamatLengkap(e.target.value)}
-              placeholder="Alamat distributor untuk pengiriman RMA..."
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             />
           </div>
@@ -421,7 +418,6 @@ function MasterDataContent() {
               type="text"
               value={kontakWa}
               onChange={(e) => setKontakWa(e.target.value)}
-              placeholder="08123456789"
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             />
           </div>
@@ -461,7 +457,6 @@ function MasterDataContent() {
               type="text"
               value={teksKeluhan}
               onChange={(e) => setTeksKeluhan(e.target.value)}
-              placeholder="Contoh: Mati Total (No Power)"
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             />
           </div>

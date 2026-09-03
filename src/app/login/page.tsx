@@ -96,7 +96,6 @@ function LoginForm() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="wandi / satryo / admin / sales"
                 className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/90 text-white text-sm rounded-xl border border-slate-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-hidden transition-all"
               />
             </div>
@@ -112,7 +111,6 @@ function LoginForm() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
                 className="w-full pl-10 pr-10 py-2.5 bg-slate-800/90 text-white text-sm rounded-xl border border-slate-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-hidden transition-all font-mono"
               />
               <button

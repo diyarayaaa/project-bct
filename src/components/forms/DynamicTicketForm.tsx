@@ -334,7 +334,6 @@ export function DynamicTicketForm({
               type="text"
               value={nomorLayanan}
               onChange={(e) => setNomorLayanan(e.target.value)}
-              placeholder={isAutoNumberLoading ? 'Menghitung...' : 'BCTRS26-0312'}
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-mono font-bold text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             />
           </div>
@@ -385,10 +384,10 @@ export function DynamicTicketForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setNamaCustomer('GHITP')}
+                  onClick={() => setNamaCustomer('TN/NY. ')}
                   className="text-[10px] font-bold px-2 py-0.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 rounded hover:bg-indigo-200"
                 >
-                  + GHITP
+                  TN/NY.
                 </button>
               </div>
             </div>
@@ -396,7 +395,6 @@ export function DynamicTicketForm({
               type="text"
               value={namaCustomer}
               onChange={(e) => setNamaCustomer(e.target.value)}
-              placeholder="Contoh: TN/NY. BUDI SANTOSO"
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             />
             <p className="text-[11px] text-slate-400 mt-1">
@@ -413,7 +411,6 @@ export function DynamicTicketForm({
               type="text"
               value={noHp}
               onChange={(e) => setNoHp(e.target.value)}
-              placeholder="Contoh: 081234567890"
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             />
           </div>
@@ -457,7 +454,6 @@ export function DynamicTicketForm({
               type="text"
               value={namaBarang}
               onChange={(e) => setNamaBarang(e.target.value)}
-              placeholder="Contoh: Asus TUF Gaming FX505"
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             />
           </div>
@@ -471,7 +467,6 @@ export function DynamicTicketForm({
               type="text"
               value={serialNumber}
               onChange={(e) => setSerialNumber(e.target.value)}
-              placeholder="Contoh: SN-ASUS-982138"
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-mono font-bold text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             />
           </div>
@@ -503,7 +498,6 @@ export function DynamicTicketForm({
             rows={2}
             value={keluhan}
             onChange={(e) => setKeluhan(e.target.value)}
-            placeholder="Tuliskan keluhan atau detail kerusakan..."
             className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
           />
         </div>
@@ -549,7 +543,6 @@ export function DynamicTicketForm({
                   handleAddCustomKelengkapan();
                 }
               }}
-              placeholder="Tambah kelengkapan lain..."
               className="flex-1 px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             />
             <button
@@ -571,7 +564,6 @@ export function DynamicTicketForm({
             type="text"
             value={catatan}
             onChange={(e) => setCatatan(e.target.value)}
-            placeholder="Contoh: Password Windows: 1234. Cek adaptor juga."
             className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
           />
         </div>
@@ -664,7 +656,6 @@ export function DynamicTicketForm({
                 type="text"
                 value={noSuratJalan}
                 onChange={(e) => setNoSuratJalan(e.target.value)}
-                placeholder="Contoh: SJ-BCTRS-260015"
                 className="w-full px-3.5 py-2 sm:py-2.5 bg-white dark:bg-slate-800 text-sm font-mono font-semibold text-slate-900 dark:text-white rounded-xl border border-amber-300 dark:border-amber-700 focus:border-orange-500 focus:outline-hidden"
               />
             </div>
@@ -727,7 +718,6 @@ export function DynamicTicketForm({
                 type="text"
                 value={snBaru}
                 onChange={(e) => setSnBaru(e.target.value)}
-                placeholder="Masukkan Serial Number unit baru pengganti..."
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 text-sm font-mono font-bold text-slate-900 dark:text-white rounded-xl border border-orange-400 dark:border-orange-600 focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
               />
             </div>

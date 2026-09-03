@@ -623,7 +623,6 @@ export default function TicketDetailPage({
                     type="text"
                     value={newSnBaru}
                     onChange={(e) => setNewSnBaru(e.target.value)}
-                    placeholder="Masukkan SN baru dari vendor..."
                     className="w-full px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono font-bold rounded-lg border border-purple-400 dark:border-purple-600 focus:outline-hidden"
                   />
                 </div>

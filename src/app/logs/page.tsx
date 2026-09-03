@@ -60,7 +60,6 @@ export default function AuditLogsPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari RMA, teknisi, atau keterangan..."
               className="w-full pl-8 sm:pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden font-medium"
             />
           </div>
