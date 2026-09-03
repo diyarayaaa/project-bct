@@ -166,6 +166,17 @@ function initDatabase(db: DatabaseSync) {
       );
     `);
 
+    // Performance Indexes for 5,000+ records
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets (status);
+      CREATE INDEX IF NOT EXISTS idx_tickets_teknisi ON tickets (teknisi);
+      CREATE INDEX IF NOT EXISTS idx_tickets_customer ON tickets (nama_customer);
+      CREATE INDEX IF NOT EXISTS idx_tickets_surat_jalan ON tickets (no_surat_jalan);
+      CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets (created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_ticket_id ON audit_logs (ticket_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs (created_at DESC);
+    `);
+
     seedInitialData(db);
   } catch (err) {
     console.error('Database initialization warning:', err);
