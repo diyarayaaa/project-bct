@@ -14,9 +14,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEFAULT_USER: User = {
+  id: 'usr-admin',
+  username: 'admin',
+  nama_lengkap: 'Admin Kasir',
+  role: 'ADMIN',
+  spesialisasi: 'Administrasi & Kasir',
+  avatar_color: 'purple'
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEFAULT_USER);
+  const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -27,7 +36,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (savedUserStr) {
         try {
           const parsed = JSON.parse(savedUserStr);
-          setUser(parsed);
+          if (parsed && parsed.id) {
+            setUser(parsed);
+          }
         } catch {
           // ignore
         }
@@ -43,33 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data.user);
         localStorage.setItem('bct_auth_user', JSON.stringify(data.user));
         localStorage.setItem('bct_current_user', data.user.nama_lengkap);
-      } else if (!savedUserStr) {
-        setUser(null);
-        localStorage.removeItem('bct_auth_user');
       }
     } catch (err) {
       console.error('Failed to check auth session:', err);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchSession();
   }, [fetchSession]);
-
-  // Route protection
-  useEffect(() => {
-    if (isLoading) return;
-
-    const isLoginPage = pathname === '/login';
-
-    if (!user && !isLoginPage) {
-      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-    } else if (user && isLoginPage) {
-      router.push('/');
-    }
-  }, [user, isLoading, pathname, router]);
 
   const login = async (username: string, password = 'bct123') => {
     try {
