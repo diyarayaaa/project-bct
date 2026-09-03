@@ -107,7 +107,7 @@ export function ImportSpreadsheetModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Import Data Tiket Spreadsheet"
-      size="lg"
+      maxWidth="lg"
     >
       <div className="space-y-5">
         {/* Info Box */}
