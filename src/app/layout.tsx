@@ -7,6 +7,11 @@ import { AppLayout } from '@/components/layout/AppLayout';
 export const metadata: Metadata = {
   title: 'Best Computel Service & RMA Management',
   description: 'Aplikasi Web Fullstack Manajemen Servis, Garansi, Surat Jalan & WhatsApp Automation Best Computel',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export const viewport: Viewport = {
