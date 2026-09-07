@@ -7,7 +7,10 @@ import {
   PlusCircle,
   Printer,
   Boxes,
-  RefreshCw
+  RefreshCw,
+  Trash2,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { ShippingLabelModal } from '@/components/prints/ShippingLabelModal';
@@ -31,12 +34,18 @@ export default function SuratJalanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState('');
 
-  // Shipping Label Modal
+  // Shipping Label Modal State
+  const [isStandaloneLabelOpen, setIsStandaloneLabelOpen] = useState(false);
   const [labelModalData, setLabelModalData] = useState<{
     vendor: string;
     noSj: string;
     tickets: Ticket[];
   } | null>(null);
+
+  // Delete State
+  const [deleteTarget, setDeleteTarget] = useState<SuratJalan | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const fetchSuratJalan = useCallback(async () => {
     setIsLoading(true);
@@ -50,6 +59,29 @@ export default function SuratJalanPage() {
       setIsLoading(false);
     }
   }, []);
+
+  const handleDeleteSuratJalan = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/surat-jalan/${deleteTarget.id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus Surat Jalan');
+      setToastMessage({
+        type: 'success',
+        text: `Surat Jalan ${deleteTarget.no_surat_jalan} berhasil dihapus. Tiket terkait dikembalikan ke status aktif.`
+      });
+      setDeleteTarget(null);
+      fetchSuratJalan();
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (err) {
+      setToastMessage({ type: 'error', text: (err as Error).message });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const fetchCreateData = async () => {
     try {
@@ -142,6 +174,24 @@ export default function SuratJalanPage() {
 
   return (
     <div className="space-y-6 w-full pb-12">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`flex items-center gap-2 p-3.5 rounded-xl border text-xs font-bold transition-all shadow-sm ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+              : 'bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -151,13 +201,26 @@ export default function SuratJalanPage() {
           </h1>
         </div>
 
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 shadow-md shadow-orange-500/20 rounded-xl transition-all self-start sm:self-auto"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Buat Surat Jalan</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {/* Standalone Cetak Alamat */}
+          <button
+            type="button"
+            onClick={() => setIsStandaloneLabelOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 border border-slate-300 dark:border-slate-700 shadow-xs rounded-xl transition-all"
+          >
+            <Boxes className="w-4 h-4 text-amber-500" />
+            <span>Cetak Label Alamat</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 shadow-md shadow-orange-500/20 rounded-xl transition-all"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Buat Surat Jalan</span>
+          </button>
+        </div>
       </div>
 
       {/* Surat Jalan Table */}
@@ -242,6 +305,7 @@ export default function SuratJalanPage() {
                         <Link
                           href={`/surat-jalan/print/${sj.no_surat_jalan}`}
                           className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition-colors"
+                          title="Cetak Surat Jalan A4"
                         >
                           <Printer className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Cetak A4</span>
@@ -257,9 +321,19 @@ export default function SuratJalanPage() {
                             })
                           }
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-lg text-xs font-bold transition-colors"
+                          title="Cetak Label Pengiriman"
                         >
                           <Boxes className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Label</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(sj)}
+                          className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold transition-colors"
+                          title="Hapus Surat Jalan"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -422,7 +496,45 @@ export default function SuratJalanPage() {
         </form>
       </Modal>
 
-      {/* Shipping Label Modal */}
+      {/* Modal Konfirmasi Hapus Surat Jalan */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus Surat Jalan"
+        subtitle="Batalkan surat jalan dan kembalikan status tiket terkait"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-900 dark:text-amber-200 text-xs">
+            <p className="font-bold mb-1">Perhatian:</p>
+            <p>
+              Menghapus Surat Jalan <span className="font-mono font-bold text-slate-900 dark:text-white">{deleteTarget?.no_surat_jalan}</span> ({deleteTarget?.distributor_vendor}) akan melepaskan seluruh tiket ({deleteTarget?.ticket_count || 0} unit) kembali ke antrean aktif dan menghapus nomor surat jalannya.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => setDeleteTarget(null)}
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleDeleteSuratJalan}
+              className="px-5 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+            >
+              <Trash2 className="w-4 h-4" />
+              {isDeleting ? 'Menghapus...' : 'Ya, Hapus Surat Jalan'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Shipping Label Modal - From Table Row */}
       {labelModalData && (
         <ShippingLabelModal
           isOpen={!!labelModalData}
@@ -432,6 +544,12 @@ export default function SuratJalanPage() {
           tickets={labelModalData.tickets}
         />
       )}
+
+      {/* Standalone Shipping Label Modal (Tanpa Harus Buat Surat Jalan) */}
+      <ShippingLabelModal
+        isOpen={isStandaloneLabelOpen}
+        onClose={() => setIsStandaloneLabelOpen(false)}
+      />
     </div>
   );
 }

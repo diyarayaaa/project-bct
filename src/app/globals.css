@@ -68,11 +68,16 @@ body {
 
 /* Print Stylesheet */
 @media print {
-  body {
+  html, body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
+  /* Hide regular UI navigation & buttons */
   .no-print,
   nav,
   aside,
@@ -83,48 +88,61 @@ body {
     display: none !important;
   }
 
-  .print-only {
-    display: block !important;
+  /* Hide all background content on page */
+  body {
+    visibility: hidden !important;
   }
 
+  /* Show ONLY printable-area or print-sheet */
+  .printable-area,
+  .printable-area *,
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible !important;
+  }
+
+  /* Pin printable-area to the absolute top of the page */
   .printable-area {
-    margin: 0 !important;
-    padding: 0 !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
+    background: #ffffff !important;
+    z-index: 9999999 !important;
   }
 
-  /* Multi-up print layouts (A4 pembagian) */
+  /* Multi-up print layouts for Surat Jalan */
   .print-sheet {
-    width: 100%;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    z-index: 9999999 !important;
   }
+
   .print-grid-2 {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 0 !important;
   }
-  .print-grid-4 {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    grid-template-rows: 1fr 1fr !important;
-    gap: 0 !important;
-  }
+
   .print-cell {
     border: 1px solid #cbd5e1 !important;
     padding: 10px !important;
     overflow: hidden !important;
   }
-  .print-cell-sm {
-    border: 1px solid #cbd5e1 !important;
-    padding: 5px !important;
-    overflow: hidden !important;
-    font-size: 9px !important;
-    line-height: 1.15 !important;
-  }
 
   @page {
-    margin: 0.5cm;
-    size: A4;
+    margin: 8mm 12mm;
+    size: A4 portrait;
   }
 }

@@ -12,7 +12,10 @@ import {
   Search,
   CheckCircle2,
   Calendar,
-  Smartphone
+  Smartphone,
+  Pencil,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { MasterVendor, MasterKeluhan, Ticket } from '@/types';
@@ -42,13 +45,29 @@ function MasterDataContent() {
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Modal Vendor
+  // Modal Tambah Vendor
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [namaVendor, setNamaVendor] = useState('');
   const [wilayah, setWilayah] = useState<'BDG' | 'JKT' | 'OTHER'>('BDG');
   const [alamatLengkap, setAlamatLengkap] = useState('');
   const [kontakWa, setKontakWa] = useState('');
   const [isSubmittingVendor, setIsSubmittingVendor] = useState(false);
+
+  // Modal Edit Vendor
+  const [isEditVendorModalOpen, setIsEditVendorModalOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<MasterVendor | null>(null);
+  const [editNamaVendor, setEditNamaVendor] = useState('');
+  const [editWilayah, setEditWilayah] = useState<'BDG' | 'JKT' | 'OTHER'>('BDG');
+  const [editAlamatLengkap, setEditAlamatLengkap] = useState('');
+  const [editKontakWa, setEditKontakWa] = useState('');
+  const [isSubmittingEditVendor, setIsSubmittingEditVendor] = useState(false);
+  const [editVendorError, setEditVendorError] = useState('');
+
+  // Modal Hapus Vendor
+  const [isDeleteVendorModalOpen, setIsDeleteVendorModalOpen] = useState(false);
+  const [vendorToDelete, setVendorToDelete] = useState<MasterVendor | null>(null);
+  const [isDeletingVendor, setIsDeletingVendor] = useState(false);
+  const [deleteVendorError, setDeleteVendorError] = useState('');
 
   // Modal Keluhan
   const [isKeluhanModalOpen, setIsKeluhanModalOpen] = useState(false);
@@ -135,6 +154,84 @@ function MasterDataContent() {
       console.error('Failed to create vendor:', err);
     } finally {
       setIsSubmittingVendor(false);
+    }
+  };
+
+  const handleOpenEditVendor = (v: MasterVendor) => {
+    setSelectedVendor(v);
+    setEditNamaVendor(v.nama_vendor);
+    setEditWilayah((v.wilayah as 'BDG' | 'JKT' | 'OTHER') || 'BDG');
+    setEditAlamatLengkap(v.alamat_lengkap || '');
+    setEditKontakWa(v.kontak_wa || '');
+    setEditVendorError('');
+    setIsEditVendorModalOpen(true);
+  };
+
+  const handleUpdateVendor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVendor || !editNamaVendor.trim()) return;
+
+    setIsSubmittingEditVendor(true);
+    setEditVendorError('');
+    try {
+      const res = await fetch(`/api/master/vendors/${selectedVendor.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama_vendor: editNamaVendor.trim(),
+          wilayah: editWilayah,
+          alamat_lengkap: editAlamatLengkap.trim() || null,
+          kontak_wa: editKontakWa.trim() || null
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setEditVendorError(data.error || 'Gagal memperbarui vendor');
+        return;
+      }
+
+      setIsEditVendorModalOpen(false);
+      setSelectedVendor(null);
+      fetchMasterData();
+    } catch (err) {
+      console.error('Failed to update vendor:', err);
+      setEditVendorError('Terjadi kesalahan saat memperbarui vendor');
+    } finally {
+      setIsSubmittingEditVendor(false);
+    }
+  };
+
+  const handleOpenDeleteVendor = (v: MasterVendor) => {
+    setVendorToDelete(v);
+    setDeleteVendorError('');
+    setIsDeleteVendorModalOpen(true);
+  };
+
+  const handleConfirmDeleteVendor = async () => {
+    if (!vendorToDelete) return;
+
+    setIsDeletingVendor(true);
+    setDeleteVendorError('');
+    try {
+      const res = await fetch(`/api/master/vendors/${vendorToDelete.id}`, {
+        method: 'DELETE'
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setDeleteVendorError(data.error || 'Gagal menghapus vendor');
+        return;
+      }
+
+      setIsDeleteVendorModalOpen(false);
+      setVendorToDelete(null);
+      fetchMasterData();
+    } catch (err) {
+      console.error('Failed to delete vendor:', err);
+      setDeleteVendorError('Terjadi kesalahan saat menghapus vendor');
+    } finally {
+      setIsDeletingVendor(false);
     }
   };
 
@@ -261,19 +358,39 @@ function MasterDataContent() {
                 key={v.id}
                 className="p-3.5 bg-slate-50 dark:bg-slate-800/70 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">{v.nama_vendor}</h3>
-                  <span
-                    className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                      v.wilayah === 'BDG'
-                        ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300'
-                        : v.wilayah === 'JKT'
-                        ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    {v.wilayah}
-                  </span>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight flex-1">
+                    {v.nama_vendor}
+                  </h3>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span
+                      className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                        v.wilayah === 'BDG'
+                          ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300'
+                          : v.wilayah === 'JKT'
+                          ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {v.wilayah}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditVendor(v)}
+                      title="Edit Vendor"
+                      className="p-1 rounded-md text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-950/60 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDeleteVendor(v)}
+                      title="Hapus Vendor"
+                      className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 flex items-start gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
@@ -478,6 +595,141 @@ function MasterDataContent() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Edit Vendor */}
+      <Modal
+        isOpen={isEditVendorModalOpen}
+        onClose={() => {
+          if (!isSubmittingEditVendor) setIsEditVendorModalOpen(false);
+        }}
+        title="Edit Data Vendor"
+        maxWidth="md"
+      >
+        <form onSubmit={handleUpdateVendor} className="space-y-4">
+          {editVendorError && (
+            <div className="p-2.5 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs rounded-xl border border-red-200 dark:border-red-900/50 font-semibold">
+              {editVendorError}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Nama Vendor *
+            </label>
+            <input
+              type="text"
+              required
+              value={editNamaVendor}
+              onChange={(e) => setEditNamaVendor(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden focus:border-cyan-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Wilayah Operasional *
+            </label>
+            <select
+              value={editWilayah}
+              onChange={(e) => setEditWilayah(e.target.value as 'BDG' | 'JKT' | 'OTHER')}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden focus:border-cyan-500"
+            >
+              <option value="BDG">Bandung (BDG)</option>
+              <option value="JKT">Jakarta (JKT)</option>
+              <option value="OTHER">Lainnya (OTHER)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Alamat Lengkap
+            </label>
+            <textarea
+              rows={3}
+              value={editAlamatLengkap}
+              onChange={(e) => setEditAlamatLengkap(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden focus:border-cyan-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Kontak WhatsApp / HP
+            </label>
+            <input
+              type="text"
+              value={editKontakWa}
+              onChange={(e) => setEditKontakWa(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden focus:border-cyan-500"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              disabled={isSubmittingEditVendor}
+              onClick={() => setIsEditVendorModalOpen(false)}
+              className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmittingEditVendor || !editNamaVendor.trim()}
+              className="px-4 py-2 text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>{isSubmittingEditVendor ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Delete Vendor */}
+      <Modal
+        isOpen={isDeleteVendorModalOpen}
+        onClose={() => {
+          if (!isDeletingVendor) setIsDeleteVendorModalOpen(false);
+        }}
+        title="Konfirmasi Hapus Vendor"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-900/50">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+            <div className="text-xs space-y-1">
+              <p className="font-bold">Apakah Anda yakin ingin menghapus vendor ini?</p>
+              <p className="text-slate-600 dark:text-slate-300 font-medium">
+                Vendor <span className="font-bold text-slate-900 dark:text-white uppercase">"{vendorToDelete?.nama_vendor}"</span> ({vendorToDelete?.wilayah}) akan dihapus dari database data master.
+              </p>
+            </div>
+          </div>
+
+          {deleteVendorError && (
+            <p className="text-xs text-red-600 font-semibold">{deleteVendorError}</p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              disabled={isDeletingVendor}
+              onClick={() => setIsDeleteVendorModalOpen(false)}
+              className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={isDeletingVendor}
+              onClick={handleConfirmDeleteVendor}
+              className="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs shadow-red-500/20"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeletingVendor ? 'Menghapus...' : 'Ya, Hapus'}</span>
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

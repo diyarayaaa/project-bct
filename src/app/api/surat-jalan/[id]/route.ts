@@ -45,3 +45,47 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to fetch surat jalan' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Search by ID or no_surat_jalan
+    const sjStmt = db.prepare('SELECT * FROM surat_jalan WHERE id = ? OR no_surat_jalan = ?');
+    const sj = sjStmt.get(id, id) as SuratJalan | undefined;
+
+    if (!sj) {
+      return NextResponse.json({ error: 'Surat Jalan tidak ditemukan' }, { status: 404 });
+    }
+
+    // Unlink tickets associated with this surat jalan
+    const unlinkStmt = db.prepare(`
+      UPDATE tickets 
+      SET no_surat_jalan = NULL,
+          tgl_kirim_vendor = NULL,
+          status = CASE 
+            WHEN status = 'PROSES GARANSI' AND jenis_layanan = 'GARANSI' THEN ''
+            WHEN status = 'ALIH SERVICE' AND jenis_layanan = 'SERVICE' THEN 'PROSES SERVICE'
+            ELSE status
+          END,
+          updated_at = datetime('now', 'localtime')
+      WHERE no_surat_jalan = ?
+    `);
+    unlinkStmt.run(sj.no_surat_jalan);
+
+    // Delete the surat jalan record
+    const deleteStmt = db.prepare('DELETE FROM surat_jalan WHERE id = ?');
+    deleteStmt.run(sj.id);
+
+    return NextResponse.json({
+      success: true,
+      message: `Surat Jalan ${sj.no_surat_jalan} berhasil dihapus dan unit terkait telah dikembalikan.`
+    });
+  } catch (error: any) {
+    console.error('Error deleting surat jalan:', error);
+    return NextResponse.json({ error: error.message || 'Gagal menghapus surat jalan' }, { status: 500 });
+  }
+}

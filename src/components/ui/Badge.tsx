@@ -39,9 +39,12 @@ const BADGE_STYLES: Record<string, { label: string; badgeClass: string }> = {
 };
 
 export function StatusBadge({ status, className = '', size = 'md' }: BadgeProps) {
-  const config = BADGE_STYLES[status] || {
-    label: status,
-    badgeClass: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+  const trimmed = typeof status === 'string' ? status.trim() : '';
+  const config = (trimmed && BADGE_STYLES[trimmed]) || {
+    label: trimmed || 'Belum Ada Status',
+    badgeClass: trimmed
+      ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-dashed border-slate-300 dark:border-slate-700'
   };
 
   const sizeClasses = {
@@ -54,7 +57,7 @@ export function StatusBadge({ status, className = '', size = 'md' }: BadgeProps)
     <span
       className={`inline-flex items-center gap-1 rounded-full border shadow-xs transition-colors ${config.badgeClass} ${sizeClasses} ${className}`}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-75 animate-pulse shrink-0" />
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${trimmed ? 'bg-current opacity-75 animate-pulse' : 'bg-slate-400'}`} />
       <span className="truncate">{config.label}</span>
     </span>
   );

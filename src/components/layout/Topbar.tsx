@@ -19,10 +19,14 @@ import {
   CheckCircle2,
   AlertCircle,
   Truck,
-  Plus
+  Plus,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { Modal } from '@/components/ui/Modal';
 
 interface PageMeta {
   title: string;
@@ -75,15 +79,55 @@ function TopbarContent() {
   const searchParams = useSearchParams();
   const currentTab = searchParams ? searchParams.get('tab') : null;
   const { toggleMobileSidebar, theme, setTheme } = useTheme();
-  const { user, logout, switchUser } = useAuth();
+  const { user, logout, login } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<{ id: string; title: string; time: string; type: string }[]>([]);
 
+  // Switch user states
+  const [switchTarget, setSwitchTarget] = useState<(typeof ALL_PROFILES)[0] | null>(null);
+  const [switchPassword, setSwitchPassword] = useState('');
+  const [showSwitchPassword, setShowSwitchPassword] = useState(false);
+  const [switchError, setSwitchError] = useState('');
+  const [isSwitching, setIsSwitching] = useState(false);
+
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectSwitchUser = (profile: (typeof ALL_PROFILES)[0]) => {
+    setIsUserDropdownOpen(false);
+    if (user?.username === profile.username) return;
+    setSwitchTarget(profile);
+    setSwitchPassword('');
+    setSwitchError('');
+    setShowSwitchPassword(false);
+  };
+
+  const handleSwitchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!switchTarget) return;
+
+    if (!switchPassword) {
+      setSwitchError('Masukkan kata sandi untuk akun ini');
+      return;
+    }
+
+    setIsSwitching(true);
+    setSwitchError('');
+
+    const res = await login(switchTarget.username, switchPassword);
+    setIsSwitching(false);
+
+    if (res.success) {
+      setSwitchTarget(null);
+      setSwitchPassword('');
+      router.refresh();
+    } else {
+      setSwitchError(res.error || 'Kata sandi tidak sesuai');
+    }
+  };
 
   // Close dropdowns on click outside
   useEffect(() => {
@@ -378,10 +422,7 @@ function TopbarContent() {
                     <button
                       key={p.username}
                       type="button"
-                      onClick={async () => {
-                        await switchUser(p.username);
-                        setIsUserDropdownOpen(false);
-                      }}
+                      onClick={() => handleSelectSwitchUser(p)}
                       className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${
                         user?.username === p.username || currentUserName === p.name
                           ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 font-semibold'
@@ -415,6 +456,82 @@ function TopbarContent() {
           )}
         </div>
       </div>
+
+      {/* Switch User Confirmation Modal */}
+      {switchTarget && (
+        <Modal
+          isOpen={!!switchTarget}
+          onClose={() => setSwitchTarget(null)}
+          title="Konfirmasi Ganti Pengguna"
+          subtitle={`Masuk sebagai ${switchTarget.name}`}
+          maxWidth="sm"
+        >
+          <form onSubmit={handleSwitchSubmit} className="space-y-4">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
+                {switchTarget.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  {switchTarget.name}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {switchTarget.role}
+                </p>
+              </div>
+            </div>
+
+            {switchError && (
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{switchError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Kata Sandi (Password) *
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type={showSwitchPassword ? 'text' : 'password'}
+                  value={switchPassword}
+                  onChange={(e) => setSwitchPassword(e.target.value)}
+                  placeholder="Masukkan kata sandi..."
+                  autoFocus
+                  className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden focus:border-cyan-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSwitchPassword(!showSwitchPassword)}
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 absolute right-2.5 top-1/2 -translate-y-1/2"
+                  tabIndex={-1}
+                >
+                  {showSwitchPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSwitchTarget(null)}
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSwitching}
+                className="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs disabled:opacity-50"
+              >
+                {isSwitching ? 'Memverifikasi...' : 'Masuk Akun'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </header>
   );
 }

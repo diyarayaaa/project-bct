@@ -49,19 +49,19 @@ export function Modal({
   }[maxWidth];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 print:static print:block print:p-0 print:m-0 print:overflow-visible print:z-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity print:hidden"
         onClick={onClose}
       />
 
       {/* Dialog Box */}
       <div
-        className={`relative w-full ${maxWidthClasses} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all z-10 my-4 sm:my-8 text-slate-900 dark:text-slate-100`}
+        className={`relative w-full ${maxWidthClasses} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all z-10 my-4 sm:my-8 text-slate-900 dark:text-slate-100 print:static print:block print:p-0 print:m-0 print:max-w-none print:w-full print:border-none print:shadow-none print:rounded-none print:overflow-visible print:bg-transparent`}
       >
         {/* Modal Header */}
-        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 print:hidden">
           <div className="min-w-0 pr-2">
             <h3 className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
               {title}
@@ -78,7 +78,7 @@ export function Modal({
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-6 max-h-[82vh] overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 max-h-[82vh] overflow-y-auto print:p-0 print:m-0 print:max-h-none print:overflow-visible">{children}</div>
       </div>
     </div>
   );

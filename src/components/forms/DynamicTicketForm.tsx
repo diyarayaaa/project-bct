@@ -15,7 +15,8 @@ import {
   TEKNISI_LIST,
   JENIS_BARANG_LIST,
   KELENGKAPAN_MAP,
-  STATUS_LIST
+  STATUS_LIST_GARANSI,
+  STATUS_LIST_SERVICE
 } from '@/lib/constants';
 import {
   Save,
@@ -75,7 +76,7 @@ export function DynamicTicketForm({
   // Assignment & Status
   const [teknisi, setTeknisi] = useState(initialData?.teknisi || 'Wandi');
   const [status, setStatus] = useState<StatusTiket>(
-    initialData?.status || (initialData?.jenis_layanan === 'GARANSI' ? 'PROSES GARANSI' : 'PROSES SERVICE')
+    initialData?.status ?? (initialData?.jenis_layanan === 'GARANSI' ? ('' as StatusTiket) : 'PROSES SERVICE')
   );
   const [catatan, setCatatan] = useState(initialData?.catatan || '');
 
@@ -304,7 +305,7 @@ export function DynamicTicketForm({
                 type="button"
                 onClick={() => {
                   setJenisLayanan('SERVICE');
-                  if (!isEditMode && status === 'PROSES GARANSI') setStatus('PROSES SERVICE');
+                  if (!STATUS_LIST_SERVICE.includes(status)) setStatus('PROSES SERVICE');
                 }}
                 className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border ${
                   jenisLayanan === 'SERVICE'
@@ -318,7 +319,7 @@ export function DynamicTicketForm({
                 type="button"
                 onClick={() => {
                   setJenisLayanan('GARANSI');
-                  if (!isEditMode) setStatus('PROSES GARANSI');
+                  if (!STATUS_LIST_GARANSI.includes(status)) setStatus('' as StatusTiket);
                 }}
                 className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border ${
                   jenisLayanan === 'GARANSI'
@@ -361,7 +362,7 @@ export function DynamicTicketForm({
             >
               {TEKNISI_LIST.map((t) => (
                 <option key={t} value={t}>
-                  {t} {t === 'Wandi' ? '(Utama & Garansi)' : t === 'Satryo' ? '(Servis Reguler)' : ''}
+                  {t}
                 </option>
               ))}
             </select>
@@ -599,7 +600,10 @@ export function DynamicTicketForm({
               onChange={(e) => setStatus(e.target.value as StatusTiket)}
               className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white rounded-xl border border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:outline-hidden"
             >
-              {STATUS_LIST.map((s) => (
+              {jenisLayanan === 'GARANSI' && (
+                <option value="">-- Belum Ada Status (Kosong) --</option>
+              )}
+              {(jenisLayanan === 'GARANSI' ? STATUS_LIST_GARANSI : STATUS_LIST_SERVICE).map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>

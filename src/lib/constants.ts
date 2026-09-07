@@ -27,6 +27,22 @@ export const KELENGKAPAN_MAP: Record<string, string[]> = {
   Other: ['Fulldus', 'Unit Saja', 'Adaptor', 'Kabel']
 };
 
+export const STATUS_LIST_GARANSI: StatusTiket[] = [
+  'PROSES GARANSI',
+  'SELESAI & DIAMBIL',
+  'SELESAI BELUM DIAMBIL',
+  'GAGAL SERVICE/GARANSI'
+];
+
+export const STATUS_LIST_SERVICE: StatusTiket[] = [
+  'PROSES SERVICE',
+  'PENDING SERVICE',
+  'SELESAI BELUM DIAMBIL',
+  'SELESAI & DIAMBIL',
+  'GAGAL SERVICE/GARANSI',
+  'ALIH SERVICE'
+];
+
 export const STATUS_LIST: StatusTiket[] = [
   'PROSES SERVICE',
   'PENDING SERVICE',

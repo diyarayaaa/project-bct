@@ -220,13 +220,30 @@ function seedInitialData(db: DatabaseSync) {
       `);
 
       const vendors = [
-        ['PT. ASIA RAYA COM BDG', 'BDG', 'Komplek Pertokoan Naripan No. 42, Bandung', '08122001122'],
-        ['PT. AGRES INFO TEKNOLOGI BDG', 'BDG', 'BEC Lt. 2 Blok C-10, Jl. Purnawarman, Bandung', '08133002233'],
-        ['METRODATA ELECTRONICS BDG', 'BDG', 'Jl. Sunda No. 55, Bandung', '08129988776'],
-        ['PT. SYNNEX METRODATA JKT', 'JKT', 'Kawasan Industri Pulogadung, Jakarta Timur', '08119008811'],
-        ['AGRES ID JKT', 'JKT', 'Harco Mangga Dua Plaza Blok A No. 12, Jakarta', '08138877665'],
-        ['PT. ASIA SURYA TECH JKT', 'JKT', 'Mangga Dua Mall Lt. 3 No. 45, Jakarta Pusat', '08157788990'],
-        ['PT. EP-TECH SERVICE CENTER', 'OTHER', 'Ruko ITC Cempaka Mas, Jakarta', '08128899001']
+        ['CV. PRISMA MITRA BUANA (ZIMLINK X PON)', 'JKT', 'Ruko Harco Mangga 2 Selatan Blok I-47, Kel. Mangga Dua Selatan, Kec. Sawah Besar, Jakarta Pusat, DKI Jakarta 10730', 'UP Bpk. Faris (0821-1922-8869)'],
+        ['PT. ASIA GLOBAL SUKSESINDO (AGS)', 'JKT', 'Ruko Harco Mangga 2 Selatan Blok F-8, Kel. Mangga Dua Selatan, Kec. Sawah Besar, Jakarta Pusat, DKI Jakarta 10730', 'UP Yuni - Adm Service AGS (0817-1777-7002)'],
+        ['Q-CHOX COMPUTER (Q CHOCK)', 'OTHER', 'Jl. Raya Cilauteureun KM.00, Pameungpeuk, Garut 44175 (Dekat Alun-Alun Pameungpeuk)', 'UP Andi Q Chock (0821-2222-7280)'],
+        ['PAK TONI GREEN NET (GREEN NET)', 'OTHER', 'Ciawi - Cibalong (Depan Garasi AL)', 'UP Pak Toni Green Net (0812-2258-0770)'],
+        ['CV. GOLDEN TECHNOLOGY INDO (FANTECH)', 'JKT', 'Ruko Sedayu Square Blok J26, RT.1/RW.12, Cengkareng Barat, Kec. Cengkareng, Kota Jakarta Barat, DKI Jakarta 11730', 'UP Ilham / Hasna (0811-1903-2716)'],
+        ['ABACUS KOMPUTER (ABACUS)', 'JKT', 'Mall Mangga Dua Blok A Lantai 4 No. 51, Jl. Mangga Dua Raya, Mangga Dua Selatan, Kec. Sawah Besar, Jakarta Pusat, DKI Jakarta 10730', 'UP Bu Elis (0858-8031-2805)'],
+        ['ELITE KOMPUTER (PAK AMIN)', 'BDG', 'Jl. Cagak Kp. Picung Gede No.32 RT 02/RW 05, Ds. Cipatik, Kec. Cihampelas, Bandung Barat 40562', 'UP Roni Amin Resmana (0812-2349-5909)'],
+        ['PT NANO SOLUSI TECHNOLOGY / SC COMPUTER (SC KOM)', 'JKT', 'Grand Boutique Center Blok E10, Jl. Mangga Dua Raya, Ancol, Kec. Pademangan, Jakarta Utara, DKI Jakarta 14430', 'UP Adm SC Computer (0815-1013-5638)'],
+        ['JETE PASKAL 23 BANDUNG (JETE)', 'BDG', '23 Paskal Shopping Center, Jl. Pasir Kaliki No.25-27 Lantai 2 Unit No.39, Kebon Jeruk, Kec. Andir, Kota Bandung, Jawa Barat 40241', 'UP Bpk. Rosi Doran (0857-3378-4023)'],
+        ['DADAN KOMPUTER (Dadan Cianjur)', 'OTHER', 'Jl. Raya Siliwangi No.2 Gang Al-Falah RT.01/RW.02, Cikaret, Desa Sukamaju, Kec. Cianjur, Kab. Cianjur', 'UP Dadan Ramdani (0856-2191-507)'],
+        ['ARIA COMPUTER', 'OTHER', 'Ruko Cimenteng (Samping Baso Mojok), Jl. Arwinda, Muka, Kec. Cianjur, Kab. Cianjur, Jawa Barat 43215', 'UP Mr. Panji (0856-5949-4246)'],
+        ['Suyantou / Kayun', 'OTHER', 'Blanten Rejo RT 02/RW 05, Sukorejo, Kec. Musuk, Boyolali, Jawa Tengah 57361', 'UP Suyantou / Kayun (0856-0248-3047)'],
+        ['PT. SURYA ARTHA KOMPUTAMA / SAK (PT. SAK)', 'JKT', 'Ruko Mangga Dua Mas D25, Jl. Mangga Dua Abdad, Sawah Besar, Jakarta Pusat, DKI Jakarta 10730', 'UP Adm PT. SAK (0877-8810-1990)'],
+        ['FM KOMPUTER (FM KOMPUTER / EZPRO)', 'JKT', 'Green Sedayu Bizpark Blok DM3 No. 11G, Kalideres, Jakarta Barat 11840', 'UP Adm FM Komputer (0878-8004-5463)'],
+        ['KC JAKARTA GROUP / ROG X MOG (KC)', 'JKT', 'WTC Mangga Dua Lantai UG Blok C No. 58, Jakarta Utara 14430', 'UP Adm KC (0858-8848-2918)'],
+        ['Surya Kencana 30', 'JKT', 'Jl. Buncit Raya No.30, RT.4/RW.5, Kalibata, Kec. Pancoran, Jakarta Selatan, DKI Jakarta 12740', 'UP Ibu Rina (0858-6063-2297)'],
+        ['PT. ASTRINDO SENOSA (SERVICE CENTER ASUS ASTRINDO)', 'BDG', 'Ruko Segitiga Mas Kosambi, Jl. Jend. A. Yani No.221-223 Blok C/13, Merdeka, Sumur Bandung, Kota Bandung, Jawa Barat 40113', 'UP Bpk. Reza (0812-2156-0599)'],
+        ['TN. GANJAR LESMANA (TN. GANJAR)', 'OTHER', 'Kp. Cikoer, Kec. Cikelet, Kab. Garut', 'UP Pak Ganjar (0821-2017-8492)'],
+        ['PT. Metro Pearl Indonesia', 'OTHER', 'Jl. Pramuka Raya Km 0.99 No. 18, Desa Bunder, Kec. Jatiluhur, Kab. Purwakarta', 'UP Pak Warta / Pak Dodi IT (0877-7975-5416)'],
+        ['AGRES INFO TEKNOLOGI (AGRES JAKARTA)', 'JKT', 'Gudang Abdad, Jl. Mangga Dua Abdad No.44-45, RW.12, Mangga Dua Selatan, Kec. Sawah Besar, Jakarta Pusat, DKI Jakarta 10730', 'UP Tiara / Daus'],
+        ['Cahaya Distribusi Nusantara (CDN)', 'JKT', 'Mall Mangga Dua Ruko Blok A10, Jakarta Pusat', 'UP Budi - Div. RMA (0855-1478-985)'],
+        ['INNOVATION', 'JKT', 'Ruko Bahan Bangunan (RBB) Blok H1 No. 9, Jl. Mangga Dua Dalam, Kel. Mangga Dua Selatan, Kec. Sawah Besar, Jakarta Pusat 10730', 'UP Bpk. Elwi Widodo (0812-9898-0909)'],
+        ['INTERAKSI CIPTA', 'JKT', 'Ruko Harco Mangga Dua Blok J No. 26, Sawah Besar, Jakarta Pusat', 'UP Bpk. Aris (0813-1135-5564)'],
+        ['MSA KOMPUTER (MSA)', 'OTHER', 'Villa Tangerang Indah Blok BE1 No. 17, Sangiang, Kec. Periuk, Kota Tangerang, Banten (Sebelah Omah Vaksin)', 'UP Adm MSA Komputer (0813-1579-3335)']
       ];
 
       for (const v of vendors) {

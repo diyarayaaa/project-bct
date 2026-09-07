@@ -5,9 +5,28 @@ import path from 'path';
 import fs from 'fs';
 
 function parseIndoDate(val: any): string | null {
-  if (!val) return null;
+  if (val === null || val === undefined || val === '') return null;
+
+  // If already a Date object
+  if (val instanceof Date && !isNaN(val.getTime())) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d} 00:00:00`;
+  }
+
   const str = String(val).trim();
-  if (!str || str === '-') return null;
+  if (!str || str === '-' || str === 'undefined' || str === 'null') return null;
+
+  // Excel serial number (e.g. 46272 or '46272')
+  const numVal = Number(str);
+  if (!isNaN(numVal) && numVal > 30000 && numVal < 70000) {
+    const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(date.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d} 00:00:00`;
+  }
 
   // Standard ISO format YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
@@ -19,27 +38,17 @@ function parseIndoDate(val: any): string | null {
     jul: '07', agu: '08', aug: '08', sep: '09', okt: '10', oct: '10', nov: '11', des: '12', dec: '12'
   };
 
-  // Format "2-Jun-2026"
-  const dmyMatch = str.match(/^(\d{1,2})[-/ ]([a-zA-Z]{3})[-/ ](\d{4})/);
+  // Format "2-Jun-2026", "02-Juni-2026", "10-Jul-2026", "8-Sep-2026"
+  const dmyMatch = str.match(/^(\d{1,2})[-/ ]([a-zA-Z]{3,10})[-/ ](\d{4})/);
   if (dmyMatch) {
     const day = dmyMatch[1].padStart(2, '0');
-    const mStr = dmyMatch[2].toLowerCase();
+    const mStr = dmyMatch[2].slice(0, 3).toLowerCase();
     const month = monthNames[mStr] || '01';
     const year = dmyMatch[3];
     return `${year}-${month}-${day} 00:00:00`;
   }
 
-  // Format "02/06/2026" or "02/06/26"
-  const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
-  if (slashMatch) {
-    const day = slashMatch[1].padStart(2, '0');
-    const month = slashMatch[2].padStart(2, '0');
-    let year = slashMatch[3];
-    if (year.length === 2) year = '20' + year;
-    return `${year}-${month}-${day} 00:00:00`;
-  }
-
-  // Format "Thursday, 04 June 2026"
+  // Format "Thursday, 04 June 2026" or "Kamis, 04 Juli 2026"
   const longMatch = str.match(/[a-zA-Z]+,\s*(\d{1,2})\s*([a-zA-Z]+)\s*(\d{4})/);
   if (longMatch) {
     const day = longMatch[1].padStart(2, '0');
@@ -47,6 +56,22 @@ function parseIndoDate(val: any): string | null {
     const month = monthNames[mStr] || '01';
     const year = longMatch[3];
     return `${year}-${month}-${day} 00:00:00`;
+  }
+
+  // Format standard Indonesia: DD/MM/YYYY or DD-MM-YYYY
+  const slashMatch = str.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})/);
+  if (slashMatch) {
+    let p1 = parseInt(slashMatch[1], 10);
+    let p2 = parseInt(slashMatch[2], 10);
+    let year = slashMatch[3];
+    if (year.length === 2) year = '20' + year;
+    let day = p1;
+    let month = p2;
+    if (p1 <= 12 && p2 > 12) {
+      day = p2;
+      month = p1;
+    }
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} 00:00:00`;
   }
 
   return null;
@@ -80,18 +105,18 @@ export async function POST(req: NextRequest) {
         const presetPath = path.join(process.cwd(), 'public', usePreset);
         if (fs.existsSync(presetPath)) {
           const buffer = fs.readFileSync(presetPath);
-          const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+          const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
           const firstSheet = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' }) as any[][];
+          rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: true }) as any[][];
         } else {
           return NextResponse.json({ error: `File preset ${usePreset} tidak ditemukan di folder public` }, { status: 404 });
         }
       } else if (file) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+        const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
         const firstSheet = wb.Sheets[wb.SheetNames[0]];
-        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' }) as any[][];
+        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: true }) as any[][];
       } else {
         return NextResponse.json({ error: 'Tidak ada file yang diunggah' }, { status: 400 });
       }
@@ -102,9 +127,9 @@ export async function POST(req: NextRequest) {
         const presetPath = path.join(process.cwd(), 'public', body.usePreset);
         if (fs.existsSync(presetPath)) {
           const buffer = fs.readFileSync(presetPath);
-          const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+          const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
           const firstSheet = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' }) as any[][];
+          rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: true }) as any[][];
         }
       }
     }
@@ -206,6 +231,7 @@ export async function POST(req: NextRequest) {
         if (!row || row.length === 0) continue;
 
         const val = (idx: number) => (idx !== -1 && row[idx] !== undefined ? String(row[idx]).trim() : '');
+        const getRaw = (idx: number) => (idx !== -1 && row[idx] !== undefined ? row[idx] : null);
 
         const noRma = val(idxRma !== -1 ? idxRma : 0);
         if (!noRma || !noRma.toUpperCase().startsWith('BCTRS')) {
@@ -213,7 +239,7 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const tglMasuk = parseIndoDate(val(idxTglMasuk)) || now;
+        const tglMasuk = parseIndoDate(getRaw(idxTglMasuk)) || now;
         const rawJenis = val(idxJenis).toUpperCase();
         const jenisLayanan = rawJenis.includes('GARANSI') ? 'GARANSI' : 'SERVICE';
         const namaCust = val(idxNamaCust) || 'Pelanggan';
@@ -223,16 +249,48 @@ export async function POST(req: NextRequest) {
         const sn = val(idxSn) || '-';
         const keluhan = val(idxKeluhan) || '-';
         const kelengkapan = parseKelengkapan(val(idxKelengkapan));
-        const estimasiSelesai = parseIndoDate(val(idxEstimasi));
+        const estimasiSelesai = parseIndoDate(getRaw(idxEstimasi));
         const estimasiBiaya = cleanNum(val(idxBiaya));
         const dp = cleanNum(val(idxDp));
         const sisa = cleanNum(val(idxSisa));
         const teknisi = val(idxTeknisi) || 'Wandi';
-        const status = val(idxStatus) || 'PROSES SERVICE';
+        const rawStatus = val(idxStatus);
+        let status = '';
+        if (jenisLayanan === 'GARANSI') {
+          const upper = rawStatus.toUpperCase().trim();
+          if (!upper || upper === '-' || upper === 'KOSONG') {
+            status = ''; // JANGAN diberi status dulu jika kosong
+          } else if (upper.includes('SELESAI') && upper.includes('DIAMBIL') && !upper.includes('BELUM') && !upper.includes('NUNGGU')) {
+            status = 'SELESAI & DIAMBIL';
+          } else if (upper.includes('BELUM DIAMBIL') || upper.includes('NUNGGU DIAMBIL') || upper.includes('SIAP AMBIL')) {
+            status = 'SELESAI BELUM DIAMBIL';
+          } else if (upper.includes('GAGAL')) {
+            status = 'GAGAL SERVICE/GARANSI';
+          } else if (upper.includes('PROSES GARANSI') || upper.includes('PROSES') || upper.includes('GARANSI')) {
+            status = 'PROSES GARANSI';
+          } else {
+            status = '';
+          }
+        } else {
+          const upper = rawStatus.toUpperCase().trim();
+          if (upper.includes('PENDING')) {
+            status = 'PENDING SERVICE';
+          } else if (upper.includes('ALIH')) {
+            status = 'ALIH SERVICE';
+          } else if (upper.includes('SELESAI') && upper.includes('DIAMBIL') && !upper.includes('BELUM') && !upper.includes('NUNGGU')) {
+            status = 'SELESAI & DIAMBIL';
+          } else if (upper.includes('BELUM DIAMBIL') || upper.includes('NUNGGU DIAMBIL') || upper.includes('SIAP AMBIL')) {
+            status = 'SELESAI BELUM DIAMBIL';
+          } else if (upper.includes('GAGAL')) {
+            status = 'GAGAL SERVICE/GARANSI';
+          } else {
+            status = 'PROSES SERVICE';
+          }
+        }
         const distributor = val(idxDistributor) || null;
-        const tglKirimVendor = parseIndoDate(val(idxTglKirim));
-        const tglDatangVendor = parseIndoDate(val(idxTglDatang));
-        const tglDiambilCust = parseIndoDate(val(idxTglAmbil));
+        const tglKirimVendor = parseIndoDate(getRaw(idxTglKirim));
+        const tglDatangVendor = parseIndoDate(getRaw(idxTglDatang));
+        const tglDiambilCust = parseIndoDate(getRaw(idxTglAmbil));
         const hasilGaransi = val(idxHasil) || null;
         const snBaru = val(idxSnBaru) || null;
         const catatan = val(idxCatatan) || null;

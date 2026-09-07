@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import {
-  Wrench,
   Lock,
   User as UserIcon,
   Eye,
@@ -20,12 +19,18 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
 
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (user) {
+      router.replace(redirect);
+    }
+  }, [user, redirect, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +41,13 @@ function LoginForm() {
       return;
     }
 
+    if (!password) {
+      setErrorMsg('Masukkan kata sandi Anda');
+      return;
+    }
+
     setIsLoading(true);
-    const res = await login(username.trim(), password || 'bct123');
+    const res = await login(username.trim(), password);
 
     if (res.success) {
       router.push(redirect);
@@ -61,9 +71,13 @@ function LoginForm() {
       {/* Main Login Card */}
       <div className="w-full max-w-md bg-slate-900/90 dark:bg-slate-900/95 backdrop-blur-md rounded-3xl border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 relative z-10 animate-in fade-in zoom-in-95 duration-200">
         {/* Brand & Logo */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white shadow-xl shadow-orange-500/30 mx-auto">
-            <Wrench className="w-7 h-7" />
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <img
+              src="/logo.png"
+              alt="Best Computel Logo"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-xl mx-auto"
+            />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">

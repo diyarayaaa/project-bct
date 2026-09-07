@@ -21,30 +21,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Default auto-session for seamless local network / multi-device access (Admin Kasir)
-    const defaultUserStmt = db.prepare('SELECT id, username, nama_lengkap, role, spesialisasi, avatar_color FROM users WHERE username = "admin" OR role = "ADMIN" LIMIT 1');
-    const defaultUser = (defaultUserStmt.get() as User | undefined) || {
-      id: 'usr-admin',
-      username: 'admin',
-      nama_lengkap: 'Admin Kasir',
-      role: 'ADMIN',
-      spesialisasi: 'Administrasi & Kasir',
-      avatar_color: 'purple'
-    };
-
-    const response = NextResponse.json({ authenticated: true, user: defaultUser });
-    response.cookies.set({
-      name: 'bct_auth_user',
-      value: JSON.stringify(defaultUser),
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      httpOnly: false,
-      sameSite: 'lax'
-    });
-
-    return response;
+    // If no valid session cookie is present, user is unauthenticated
+    return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
   } catch (error) {
     console.error('Error in auth me route:', error);
-    return NextResponse.json({ authenticated: false }, { status: 200 });
+    return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
   }
 }

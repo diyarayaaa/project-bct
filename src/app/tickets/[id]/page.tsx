@@ -25,7 +25,7 @@ import { CustomerReceiptModal } from '@/components/prints/CustomerReceiptModal';
 import { ShippingLabelModal } from '@/components/prints/ShippingLabelModal';
 import { DynamicTicketForm } from '@/components/forms/DynamicTicketForm';
 import { Ticket, AuditLog, StatusTiket } from '@/types';
-import { STATUS_LIST, TEKNISI_LIST } from '@/lib/constants';
+import { STATUS_LIST, STATUS_LIST_GARANSI, STATUS_LIST_SERVICE, TEKNISI_LIST } from '@/lib/constants';
 import {
   formatDateIndo,
   formatDateTimeIndo,
@@ -571,7 +571,10 @@ export default function TicketDetailPage({
               onChange={(e) => setNewStatus(e.target.value as StatusTiket)}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 focus:outline-hidden"
             >
-              {STATUS_LIST.map((s) => (
+              {ticket.jenis_layanan === 'GARANSI' && (
+                <option value="">-- Belum Ada Status (Kosong) --</option>
+              )}
+              {(ticket.jenis_layanan === 'GARANSI' ? STATUS_LIST_GARANSI : STATUS_LIST_SERVICE).map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>

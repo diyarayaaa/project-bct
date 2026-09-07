@@ -7,64 +7,59 @@ import { User } from '@/types';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (username: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  switchUser: (username: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEFAULT_USER: User = {
-  id: 'usr-admin',
-  username: 'admin',
-  nama_lengkap: 'Admin Kasir',
-  role: 'ADMIN',
-  spesialisasi: 'Administrasi & Kasir',
-  avatar_color: 'purple'
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(DEFAULT_USER);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
   const fetchSession = useCallback(async () => {
+    setIsLoading(true);
     try {
-      // 1. Check localStorage first for instant client response
-      const savedUserStr = localStorage.getItem('bct_auth_user');
-      if (savedUserStr) {
-        try {
-          const parsed = JSON.parse(savedUserStr);
-          if (parsed && parsed.id) {
-            setUser(parsed);
-          }
-        } catch {
-          // ignore
-        }
-      }
-
-      // 2. Validate with API
+      // Validate with API
       const res = await fetch('/api/auth/me');
       const text = await res.text();
       let data: { authenticated?: boolean; user?: User } = {};
-      try { data = text ? JSON.parse(text) : {}; } catch { /* ignore non-json */ }
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        // ignore non-json
+      }
 
       if (data.authenticated && data.user) {
         setUser(data.user);
         localStorage.setItem('bct_auth_user', JSON.stringify(data.user));
         localStorage.setItem('bct_current_user', data.user.nama_lengkap);
+      } else {
+        setUser(null);
+        localStorage.removeItem('bct_auth_user');
+        localStorage.removeItem('bct_current_user');
+        if (pathname && pathname !== '/login') {
+          router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+        }
       }
     } catch (err) {
       console.error('Failed to check auth session:', err);
+      setUser(null);
+      if (pathname && pathname !== '/login') {
+        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [pathname, router]);
 
   useEffect(() => {
     fetchSession();
   }, [fetchSession]);
 
-  const login = async (username: string, password = 'bct123') => {
+  const login = async (username: string, password: string) => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -77,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
-        return { success: false, error: text ? text.slice(0, 200) : `Server error ${res.status}: respon kosong (cek log Vercel)` };
+        return { success: false, error: text ? text.slice(0, 200) : `Server error ${res.status}` };
       }
 
       if (!res.ok || !data.success) {
@@ -102,14 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       localStorage.removeItem('bct_auth_user');
+      localStorage.removeItem('bct_current_user');
       router.push('/login');
-    }
-  };
-
-  const switchUser = async (username: string) => {
-    const res = await login(username, 'bct123');
-    if (res.success) {
-      router.refresh();
     }
   };
 
@@ -119,8 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         login,
-        logout,
-        switchUser
+        logout
       }}
     >
       {children}
