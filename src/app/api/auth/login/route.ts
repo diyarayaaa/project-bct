@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username, password, rememberMe } = body;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -46,14 +46,17 @@ export async function POST(request: NextRequest) {
     });
 
     // Set HTTP cookie for session
-    response.cookies.set({
+    // If rememberMe is true, keep for 7 days. If false, session cookie (expires when browser is closed).
+    const cookieOptions: Parameters<typeof response.cookies.set>[0] = {
       name: 'bct_auth_user',
       value: JSON.stringify(safeUser),
       path: '/',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      httpOnly: false, // accessible to client for fast state sync
-      sameSite: 'lax'
-    });
+      httpOnly: false,
+      sameSite: 'lax',
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 7 } : {})
+    };
+
+    response.cookies.set(cookieOptions);
 
     return response;
   } catch (error) {
