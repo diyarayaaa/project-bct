@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Best Computel Service & RMA — Presentation Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-dark: #1e293b;
+      --card-border: #334155;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --accent-light: #fb923c;
+      --text-white: #ffffff;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --emerald: #10b981;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #090d16;
+      color: var(--text-white);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Top Action Bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #f8fafc;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      color: var(--text-white);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: #273549;
+      border-color: #475569;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    /* Deck Viewport */
+    .deck-container {
+      width: 100vw;
+      max-width: 1240px;
+      height: 700px;
+      max-height: 88vh;
+      margin-top: 56px;
+      position: relative;
+      perspective: 1000px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    /* Slide Card */
+    .slide {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 44px 52px;
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.98);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+      position: relative;
+      top: 0;
+      left: 0;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+    }
+
+    .tag-badge {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .slide-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-white);
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .slide-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Slide Content Area */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Grid Layouts */
+    .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .grid-3col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      height: 100%;
+    }
+
+    /* Minimalist Content Cards */
+    .feature-card {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent);
+    }
+
+    .feature-card.blue::before { background: var(--blue); }
+    .feature-card.emerald::before { background: var(--emerald); }
+    .feature-card.amber::before { background: var(--amber); }
+    .feature-card.rose::before { background: var(--rose); }
+    .feature-card.purple::before { background: var(--purple); }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .card-subtitle.blue { color: var(--blue); }
+    .card-subtitle.emerald { color: var(--emerald); }
+    .card-subtitle.amber { color: var(--amber); }
+    .card-subtitle.rose { color: var(--rose); }
+    .card-subtitle.purple { color: var(--purple); }
+
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .bullet-list li {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .bullet-list li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Cover Slide Specifics */
+    .cover-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      padding: 20px 0;
+    }
+
+    .cover-hero-title {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .cover-hero-sub {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .cover-lead {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 820px;
+      line-height: 1.6;
+    }
+
+    .cover-specs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 36px;
+    }
+
+    .spec-box {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .spec-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .spec-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 4px;
+    }
+
+    .spec-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Metrics Row */
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .metric-val {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-white);
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .metric-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Slide Footer */
+    .slide-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Bottom Navigation Controls */
+    .bottom-bar {
+      position: fixed;
+      bottom: 16px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 50px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 50;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      transition: background 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--card-border);
+    }
+
+    .slide-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* Progress bar */
+    .progress-bar-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 60;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 10%;
+      transition: width 0.25s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <span class="brand-badge">BCT</span>
+      <div>
+        <span class="brand-title">BEST COMPUTEL SERVICE & RMA</span>
+        <span class="brand-sub"> | mybctapps v1.0</span>
+      </div>
+    </div>
+    <div class="top-controls">
+      <a href="/Best_Computel_Service_RMA_Presentation.pptx" download class="btn btn-primary" title="Unduh File PPTX">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download PPTX
+      </a>
+      <button class="btn" onclick="toggleFullscreen()" title="Layar Penuh (F)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        Fullscreen
+      </button>
+    </div>
+  </header>
+
+  <!-- Deck Viewport -->
+  <main class="deck-container" id="deckContainer">
+
+    <!-- SLIDE 1: COVER -->
+    <article class="slide active" data-slide="1">
+      <div class="cover-body">
+        <div>
+          <span class="tag-badge">SISTEM ARSITEKTUR & OPERASIONAL</span>
+          <h1 class="cover-hero-title">BEST COMPUTEL<br>SERVICE & RMA</h1>
+          <p class="cover-hero-sub">Aplikasi Web Manajemen Servis Terpadu, Distribusi Garansi Vendor, dan Otomasi Logistik (mybctapps)</p>
+          <p class="cover-lead">
+            Migrasi menyeluruh dari operasional manual berbasis Google AppSheet & Google Sheets menuju platform web terpusat yang cepat, presisi di meja teknisi, serta akuntabel secara keuangan dan logistik pengiriman.
+          </p>
+        </div>
+
+        <div class="cover-specs">
+          <div class="spec-box">
+            <div class="spec-label">KODE REPOSITORI</div>
+            <div class="spec-val">mybctapps v1.0</div>
+            <div class="spec-desc">Next.js 16 • React 19 • Tailwind v4</div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-label">CAKUPAN OPERASI</div>
+            <div class="spec-val">Servis & Garansi</div>
+            <div class="spec-desc">Intake, Kasir, Vendor RMA, Sales</div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-label">OTOMASI UTAMA</div>
+            <div class="spec-val">Dual WA & Surat Jalan</div>
+            <div class="spec-desc">Notifikasi Pelanggan & Laporan Kamis</div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-label">PROTEKSI SISTEM</div>
+            <div class="spec-val">5-Device Node-Lock</div>
+            <div class="spec-desc">Audit Trail & Akses Khusus Bengkel</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>01 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 2: PROBLEM STATEMENT -->
+    <article class="slide" data-slide="2">
+      <header class="slide-header">
+        <span class="tag-badge">01 / Latar Belakang & Masalah</span>
+        <h2 class="slide-title">Tantangan Operasional di Sistem Lama (AppSheet & Sheets)</h2>
+        <p class="slide-subtitle">Kendala nyata di lapangan yang menghambat akuntabilitas dan kecepatan pelayanan servis harian</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-2x2">
+          <div class="feature-card amber">
+            <div class="card-title">Desinkronisasi & Batasan Spreadsheet</div>
+            <div class="card-subtitle amber">Integritas Data Sering Terganggu</div>
+            <p class="card-desc">
+              Penggunaan Google Sheets multi-user sering memicu tabrakan input data, formula kalkulasi biaya tidak sengaja terhapus, dan loading sistem melambat secara signifikan saat data servis mencapai ribuan baris.
+            </p>
+          </div>
+          <div class="feature-card rose">
+            <div class="card-title">Titik Buta Pelacakan Garansi Vendor</div>
+            <div class="card-subtitle rose">Distribusi Bandung & Jakarta Tidak Terdata</div>
+            <p class="card-desc">
+              Unit yang dikirim ke distributor pihak ketiga (PT. Asia Raya Com BDG, Agres ID JKT, dll) tidak memiliki nomor Surat Jalan terstandar. Ketika pelanggan menanyakan status barang, teknisi kesulitan melacak riwayat pengiriman.
+            </p>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">Beban Komunikasi WhatsApp Manual</div>
+            <div class="card-subtitle blue">5-10 Menit Terbuang per Perangkat</div>
+            <p class="card-desc">
+              Teknisi harus menyalin-tempel teks tanda terima, nomor nota, keluhan, dan kelengkapan secara manual ke chat pelanggan. Rawan salah ketik rincian perangkat serta tidak ada format pesan yang seragam.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="card-title">Kerancuan Barang Pelanggan vs Stok Toko</div>
+            <div class="card-subtitle">Unit Inventaris Internal Sering Tertahan</div>
+            <p class="card-desc">
+              Unit milik toko (STOCK BCT dan GHITP) yang digaransikan bercampur dalam antrean servis umum. Tim sales terlambat mengetahui jika unit sudah selesai klaim ganti baru, sehingga barang siap jual tertahan lama di meja servis.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>02 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 3: THE SOLUTION -->
+    <article class="slide" data-slide="3">
+      <header class="slide-header">
+        <span class="tag-badge">02 / Solusi Terpadu</span>
+        <h2 class="slide-title">Pilar Solusi mybctapps: Satu Ekosistem Terpusat</h2>
+        <p class="slide-subtitle">Menggabungkan dynamic intake, logistik vendor berresi, dan automasi laporan WhatsApp</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-3col">
+          <div class="feature-card">
+            <div class="card-title">1. Dynamic Intake Engine</div>
+            <div class="card-subtitle">Kecepatan & Presisi Meja Servis</div>
+            <ul class="bullet-list">
+              <li>Penomoran otomatis standar BCTRS26-XXXX dengan kemampuan manual override fleksibel.</li>
+              <li>Standarisasi otomatis prefix nama pelanggan dengan format TN/NY.</li>
+              <li>Checklist kelengkapan adaptif: opsi berubah otomatis berdasarkan jenis barang (Laptop, PC, Printer).</li>
+              <li>Kalkulasi keuangan instan: Sisa Pembayaran terhitung otomatis dari Estimasi Biaya dikurangi DP.</li>
+            </ul>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">2. Vendor Logistics & RMA</div>
+            <div class="card-subtitle blue">Transparansi Distribusi Distributor</div>
+            <ul class="bullet-list">
+              <li>Form dinamis garansi otomatis muncul saat memilih jenis GARANSI atau ALIH SERVICE.</li>
+              <li>Consolidated Surat Jalan: Multi-unit ke vendor yang sama digabungkan dalam 1 lembar Surat Jalan.</li>
+              <li>Validasi wajib Serial Number Baru dari distributor jika hasil servis berstatus Diganti Baru.</li>
+              <li>Layout cetak resmi A4 Surat Jalan dengan 3 kolom tanda tangan dan stiker label paket ekspedisi.</li>
+            </ul>
+          </div>
+          <div class="feature-card emerald">
+            <div class="card-title">3. WhatsApp Engine & Control</div>
+            <div class="card-subtitle emerald">Automasi Komunikasi & Akuntabilitas</div>
+            <ul class="bullet-list">
+              <li>Notifikasi tanda terima & unit selesai 1-klik langsung ke nomor WhatsApp pelanggan.</li>
+              <li>Pipeline Laporan Operasional Mingguan (setiap Kamis) dengan grouping nama distributor yang bersih.</li>
+              <li>Pipeline Laporan Sales terisolasi khusus barang internal (STOCK BCT / GHITP) siap pajang.</li>
+              <li>Audit Trail mencatat nama teknisi pelaksana, timestamp, dan histori payload perubahan status.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>03 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 4: USER ROLES -->
+    <article class="slide" data-slide="4">
+      <header class="slide-header">
+        <span class="tag-badge">03 / Pembagian Wewenang</span>
+        <h2 class="slide-title">Struktur Peran Pengguna & Alur Kerja Lapangan</h2>
+        <p class="slide-subtitle">Pemisahan tanggung jawab yang jelas untuk memastikan operasional tertib dan transparan</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-2x2">
+          <div class="feature-card">
+            <div class="card-title">Teknisi Servis</div>
+            <div class="card-subtitle">Wandi, Satryo, Derida, Anzar</div>
+            <ul class="bullet-list">
+              <li>Menerima unit masuk, memeriksa kondisi fisik, dan mencatat checklist kelengkapan barang.</li>
+              <li>Melakukan diagnosis kerusakan, estimasi biaya perbaikan, dan pengujian fungsi unit.</li>
+              <li>Mengupdate status pengerjaan (Proses Service, Pending, Selesai Belum Diambil, Gagal).</li>
+              <li>Servis reguler dikerjakan tim teknisi; Alur Garansi & Alih Servis dipusatkan ke Wandi.</li>
+            </ul>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">Admin / Kasir</div>
+            <div class="card-subtitle blue">Administrasi, Kasir & Pengiriman</div>
+            <ul class="bullet-list">
+              <li>Mengelola pembayaran uang muka (DP) dan pencatatan pelunasan sisa biaya servis.</li>
+              <li>Mencetak lembar tanda terima resmi untuk diserahkan ke pelanggan sebagai bukti pengambilan.</li>
+              <li>Mengelola jadwal kirim vendor dan menerbitkan nomor Surat Jalan mingguan (hari Sabtu).</li>
+              <li>Mencetak label alamat pengiriman paket kardus untuk ekspedisi (JNE, J&T, Travel).</li>
+            </ul>
+          </div>
+          <div class="feature-card emerald">
+            <div class="card-title">Tim Sales</div>
+            <div class="card-subtitle emerald">Pengawasan Stok Toko (STOCK BCT / GHITP)</div>
+            <ul class="bullet-list">
+              <li>Memantau unit inventaris internal toko yang sedang dalam proses klaim garansi vendor.</li>
+              <li>Menerima rekap berkala otomatis melalui saluran WhatsApp Sales khusus (0821-2008-1484).</li>
+              <li>Mendapatkan nomor seri baru (SN Baru) pengganti dari distributor untuk segera diperbarui di stok.</li>
+              <li>Mengalokasikan unit yang sudah selesai garansi kembali ke etalase penjualan toko.</li>
+            </ul>
+          </div>
+          <div class="feature-card purple">
+            <div class="card-title">Superadmin / Owner</div>
+            <div class="card-subtitle purple">Pengawasan Sistem & Kebijakan</div>
+            <ul class="bullet-list">
+              <li>Memantau metrik performa: jumlah servis aktif, unit pending konfirmasi, dan antrean vendor.</li>
+              <li>Memeriksa tabel Audit Trail untuk meninjau riwayat perubahan status dan log teknisi pelaksana.</li>
+              <li>Mengelola data master distributor vendor wilayah Bandung, Jakarta, dan wilayah lainnya.</li>
+              <li>Mengatur dan mereset otorisasi lisensi perangkat (5-Device Node-Lock).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>04 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 5: DYNAMIC FORM INTAKE -->
+    <article class="slide" data-slide="5">
+      <header class="slide-header">
+        <span class="tag-badge">04 / Fitur Utama 1</span>
+        <h2 class="slide-title">Dynamic Form Engine: Intake Cerdas di Meja Teknisi</h2>
+        <p class="slide-subtitle">Formulir beradaptasi otomatis sesuai jenis perangkat dan alur layanan untuk mencegah salah input</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-3col">
+          <div class="feature-card">
+            <div class="card-title">Penomoran & Prefix Pelanggan</div>
+            <div class="card-subtitle">Format Baku & Konsisten</div>
+            <ul class="bullet-list">
+              <li>Format Otomatis BCTRS[YY]-[0000]: Menggunakan pola tahunan (contoh: BCTRS26-0312).</li>
+              <li>Dukungan Override Manual: Teknisi tetap dapat mengedit nomor layanan bila harus melompati nomor tanpa merusak data.</li>
+              <li>Prefix Standar TN/NY.: Nama pelanggan otomatis tersimpan dengan format standar TN/NY. NAMA untuk kerapian database dan nota.</li>
+            </ul>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">Checklist Kelengkapan Adaptif</div>
+            <div class="card-subtitle blue">Checkbox Berubah Real-Time</div>
+            <ul class="bullet-list">
+              <li>Jika Perangkat = Laptop: Checklist menampilkan Unit, Charger, Tas, Baterai, Unit Saja, RAM, SSD.</li>
+              <li>Jika Perangkat = PC: Menampilkan Tutup Case 1, Tutup Case Full, Dus, RAM, SSD, HDD, VGA, PSU.</li>
+              <li>Jika Selain Laptop/PC: Otomatis menampilkan Fulldus, Unit Saja, Adaptor, Kabel Power.</li>
+              <li>Mencegah risiko klaim barang tertinggal atau hilang tanpa bukti serah terima yang jelas.</li>
+            </ul>
+          </div>
+          <div class="feature-card emerald">
+            <div class="card-title">Kalkulasi Keuangan Otomatis</div>
+            <div class="card-subtitle emerald">Perhitungan Real-Time Tanpa Manual</div>
+            <ul class="bullet-list">
+              <li>Kalkulasi Sisa Otomatis: Sisa = Estimasi Biaya - DP dihitung langsung saat teknisi mengetik nominal.</li>
+              <li>Trigger Biaya Akhir: Saat status diubah menjadi SELESAI & DIAMBIL, kolom Biaya Akhir dan Tanggal Diambil otomatis terisi default waktu saat ini.</li>
+              <li>Format Rupiah Terstandarisasi: Semua nominal mata uang diformat rapi (contoh: Rp 150.000).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>05 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 6: VENDOR LOGISTICS -->
+    <article class="slide" data-slide="6">
+      <header class="slide-header">
+        <span class="tag-badge">05 / Fitur Utama 2</span>
+        <h2 class="slide-title">Logistik Garansi Vendor: Distribusi Bandung & Jakarta</h2>
+        <p class="slide-subtitle">Pengendalian alur pengiriman distributor dengan surat jalan terpadu dan verifikasi nomor seri</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-2x2">
+          <div class="feature-card">
+            <div class="card-title">Alur Pengalihan & Grouping Surat Jalan</div>
+            <div class="card-subtitle">Mekanisme Alur Garansi & Alih Servis Pihak Ketiga</div>
+            <ul class="bullet-list">
+              <li>Pemicu Kondisional Form Garansi: Memilih GARANSI atau ALIH SERVICE membuka field logistik khusus (Vendor, Tgl Kirim, Tgl Datang, Hasil).</li>
+              <li>Consolidated Surat Jalan (Grouping): Multi-unit ke distributor yang sama pada hari kirim digabung dalam 1 nomor Surat Jalan tunggal (SJ-BCTRS-260015).</li>
+              <li>Integrasi Master Vendor: Dropdown terhubung langsung ke master_vendors (Bandung, Jakarta, Other), lengkap dengan alamat dan kontak PIC.</li>
+            </ul>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">Validasi Pergantian Unit & Dokumen</div>
+            <div class="card-subtitle blue">Standar Dokumen Fisik & Pelacakan Serial Number Baru</div>
+            <ul class="bullet-list">
+              <li>Validasi Wajib Serial Number Baru: Jika hasil garansi adalah "Diganti baru", input Serial Number Baru dari unit pengganti wajib diisi sebelum tiket ditutup.</li>
+              <li>Template Cetak Surat Jalan A4 Resmi: Layout cetak A4 siap print dengan rincian seluruh perangkat dan 3 kolom tanda tangan (Toko, Ekspedisi, Vendor).</li>
+              <li>Cetak Stiker Label Alamat: Label stiker dus paket untuk ekspedisi (JNE/J&T), memuat data pengirim BCT dan alamat lengkap vendor tujuan.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>06 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 7: WHATSAPP AUTOMATION -->
+    <article class="slide" data-slide="7">
+      <header class="slide-header">
+        <span class="tag-badge">06 / Fitur Utama 3</span>
+        <h2 class="slide-title">Dual-Pipeline WhatsApp: Automasi Komunikasi 3 Jalur</h2>
+        <p class="slide-subtitle">Mengeliminasi pekerjaan manual salin-tempel pesan dan memastikan akurasi data ke setiap target</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-3col">
+          <div class="feature-card">
+            <div class="card-title">Jalur 1: Notifikasi Pelanggan</div>
+            <div class="card-subtitle">Pesan Transaksional Pelanggan</div>
+            <p class="card-desc" style="margin-bottom: 8px;">Tanda terima instan saat unit masuk & pengumuman unit selesai siap diambil.</p>
+            <ul class="bullet-list">
+              <li>Template Tanda Terima Masuk: Mengirimkan No RMA, nama barang, SN, keluhan, kelengkapan, dan estimasi selesai.</li>
+              <li>Template Unit Selesai: Mengabarkan perbaikan selesai disertai jam operasional toko.</li>
+              <li>Tombol 1-klik membuka WhatsApp Web / Desktop langsung dengan pesan terformat rapi.</li>
+            </ul>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">Jalur 2: Laporan Operasional</div>
+            <div class="card-subtitle blue">Rekap Mingguan Tim Teknisi</div>
+            <p class="card-desc" style="margin-bottom: 8px;">Broadcast ke Grup WhatsApp Tim Operasional setiap hari Kamis.</p>
+            <ul class="bullet-list">
+              <li>Kategori 1: Unit yang dikirim hari ini ke distributor Bandung.</li>
+              <li>Kategori 2 & 3: Rekap unit yang sedang diproses di vendor Bandung dan Jakarta.</li>
+              <li>Kategori 4: Antrean garansi yang belum diproses/dikirim.</li>
+              <li>Aturan Parser: Header vendor digrouping dan suffix wilayah BDG/JKT dibersihkan otomatis.</li>
+            </ul>
+          </div>
+          <div class="feature-card emerald">
+            <div class="card-title">Jalur 3: Laporan Tim Sales</div>
+            <div class="card-subtitle emerald">Filter Khusus Unit Toko</div>
+            <p class="card-desc" style="margin-bottom: 8px;">Dikirim khusus ke nomor WhatsApp Sales (0821-2008-1484).</p>
+            <ul class="bullet-list">
+              <li>Filter Mandatori: Khusus data customer STOCK BCT atau GHITP.</li>
+              <li>Informasi Pergantian Unit: Menampilkan unit garansi selesai dengan komparasi SN Lama vs SN Baru pengganti.</li>
+              <li>Monitoring Barang Toko: Sales langsung mengetahui unit inventaris mana saja yang masih tertahan di vendor.</li>
+              <li>Mempercepat perputaran produk siap display dan penjualan kembali.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>07 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 8: TECH STACK -->
+    <article class="slide" data-slide="8">
+      <header class="slide-header">
+        <span class="tag-badge">07 / Landasan Teknologi</span>
+        <h2 class="slide-title">Arsitektur Teknis: Ringan, Cepat, dan Skalabel</h2>
+        <p class="slide-subtitle">Kombinasi teknologi modern untuk performa tinggi di lingkungan kerja bengkel servis</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-2x2">
+          <div class="feature-card">
+            <div class="card-title">Frontend & App Framework</div>
+            <div class="card-subtitle">Next.js 16 (App Router) & React 19</div>
+            <p class="card-desc">
+              Mendukung server-rendered page untuk inisialisasi cepat dan transisi halaman tanpa reload. TypeScript menjamin keketatan tipe data di seluruh komponen form, routing, dan validasi schema.
+            </p>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">Design System & Cetak Dokumen</div>
+            <div class="card-subtitle blue">Tailwind CSS v4 & Print Media Rules</div>
+            <p class="card-desc">
+              Palet warna industri modern Slate & Orange yang nyaman dipandang. Dilengkapi CSS media print khusus untuk memastikan cetakan tanda terima 80mm dan Surat Jalan A4 presisi tanpa elemen navigasi browser.
+            </p>
+          </div>
+          <div class="feature-card emerald">
+            <div class="card-title">Database & Integritas Relasi</div>
+            <div class="card-subtitle emerald">PostgreSQL / SQLite & Relational Schema</div>
+            <p class="card-desc">
+              Skema relasional kokoh dengan tabel utama: tickets, surat_jalan, master_vendors, master_keluhan, dan audit_logs. Didukung cascading relation dan index untuk pencarian instan nomor RMA dan serial number.
+            </p>
+          </div>
+          <div class="feature-card amber">
+            <div class="card-title">Integrasi Utilitas & Ekspor</div>
+            <div class="card-subtitle amber">SheetJS / XLSX & WA URL Formatter</div>
+            <p class="card-desc">
+              Fitur ekspor data antrean ke format Excel tabular untuk pembukuan akuntansi toko. Generator pesan WhatsApp mandiri yang menyusun teks terstruktur dengan pemformatan tebal dan tata letak rapi.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>08 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 9: SECURITY & AUDIT -->
+    <article class="slide" data-slide="9">
+      <header class="slide-header">
+        <span class="tag-badge">08 / Keamanan & Tata Kelola</span>
+        <h2 class="slide-title">Akuntabilitas Data: Audit Trail & 5-Device Node-Lock</h2>
+        <p class="slide-subtitle">Mekanisme proteksi internal untuk memastikan setiap mutasi data tercatat dan akses terkendali</p>
+      </header>
+      <div class="slide-body">
+        <div class="grid-3col">
+          <div class="feature-card">
+            <div class="card-title">Immutable Audit Trail</div>
+            <div class="card-subtitle">Pencatatan Setiap Perubahan Data</div>
+            <p class="card-desc">
+              Setiap aksi perubahan status pengerjaan atau pengeditan data tiket otomatis tersimpan ke tabel audit_logs. Mencatat identitas teknisi pelaksana (actor), jenis aksi, waktu milidetik, serta perbandingan JSON payload data sebelum dan sesudah perubahan.
+            </p>
+          </div>
+          <div class="feature-card blue">
+            <div class="card-title">5-Device Node-Lock</div>
+            <div class="card-subtitle blue">Pembatasan Akses Khusus Bengkel</div>
+            <p class="card-desc">
+              Sistem dibatasi hanya dapat diakses oleh maksimal 5 perangkat fisik yang terdaftar (PC Kasir, Meja Teknisi 1-3, dan Komputer Owner). Verifikasi menggunakan hardware identifier token lokal untuk mencegah sistem diakses dari jaringan atau perangkat liar di luar toko.
+            </p>
+          </div>
+          <div class="feature-card emerald">
+            <div class="card-title">Safeguards Pencegahan Human Error</div>
+            <div class="card-subtitle emerald">Validasi Form & Proteksi Aksi Kritis</div>
+            <p class="card-desc">
+              Sistem dilengkapi proteksi anti double-submit (tombol otomatis disabled dengan status spinner saat request berlangsung), konfirmasi modal untuk tindakan berbahaya (pembatalan/penghapusan tiket), serta auto-trim whitespace pada input nomor seri dan nomor telepon.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>09 / 10</span>
+      </div>
+    </article>
+
+    <!-- SLIDE 10: IMPACT & ROADMAP -->
+    <article class="slide" data-slide="10">
+      <header class="slide-header">
+        <span class="tag-badge">09 / Dampak & Rencana</span>
+        <h2 class="slide-title">Dampak Operasional Nyata & Rencana Pengembangan</h2>
+        <p class="slide-subtitle">Evaluasi peningkatan efisiensi kerja di bengkel servis dan langkah penyempurnaan ke depan</p>
+      </header>
+      <div class="slide-body">
+        <div class="metric-row">
+          <div class="metric-card">
+            <div class="metric-val">80%</div>
+            <div class="metric-label">WAKTU INPUT LEBIH CEPAT</div>
+            <div class="metric-desc">Waktu registrasi tiket berkurang dari ~5 menit menjadi kurang dari 1 menit berkat formulir dinamis & auto-formatting.</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val">100%</div>
+            <div class="metric-label">PELACAKAN GARANSI VENDOR</div>
+            <div class="metric-desc">Nol kasus unit garansi hilang di distributor tanpa nomor Surat Jalan baku dan nomor resi pengiriman ekspedisi.</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val">2x</div>
+            <div class="metric-label">PERPUTARAN STOK TOKO</div>
+            <div class="metric-desc">Unit garansi internal (STOCK BCT / GHITP) langsung teridentifikasi oleh Tim Sales untuk dipajang kembali.</div>
+          </div>
+        </div>
+
+        <div class="feature-card blue" style="flex: 1;">
+          <div class="card-title">Roadmap Pengembangan Selanjutnya (Next Milestones)</div>
+          <div class="grid-3col" style="margin-top: 10px;">
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--blue); margin-bottom: 2px;">FASE 2 (Q4)</div>
+              <div style="font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px;">Direct Bluetooth Printing</div>
+              <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Cetak struk nota langsung ke printer thermal 80mm via Web Bluetooth API tanpa dialog print browser.</div>
+            </div>
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--blue); margin-bottom: 2px;">FASE 3 (Q1)</div>
+              <div style="font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px;">Inventaris Sparepart</div>
+              <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Pencatatan pemakaian sparepart (SSD, RAM, LCD, Baterai) otomatis memotong stok saat tiket selesai.</div>
+            </div>
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--blue); margin-bottom: 2px;">FASE 4 (Q2)</div>
+              <div style="font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px;">Portal Pelacakan QR Code</div>
+              <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Pelanggan dapat memantau status servis mandiri cukup dengan scan kode QR pada nota fisik.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>mybctapps • Best Computel Service & RMA System</span>
+        <span>10 / 10</span>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- Bottom Nav Controls -->
+  <nav class="bottom-bar">
+    <button class="nav-btn" onclick="prevSlide()" title="Slide Sebelumnya (Panah Kiri)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="slide-counter" id="slideCounter">01 / 10</div>
+    <button class="nav-btn" onclick="nextSlide()" title="Slide Selanjutnya (Panah Kanan / Spasi)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </nav>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBarFill"></div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 10;
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slideCounter');
+    const progressFill = document.getElementById('progressBarFill');
+
+    function updateSlide() {
+      slides.forEach(slide => {
+        const num = parseInt(slide.getAttribute('data-slide'), 10);
+        if (num === currentSlide) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      const formattedCurrent = currentSlide < 10 ? '0' + currentSlide : currentSlide;
+      const formattedTotal = totalSlides < 10 ? '0' + totalSlides : totalSlides;
+      counter.textContent = `${formattedCurrent} / ${formattedTotal}`;
+
+      const progressPercent = (currentSlide / totalSlides) * 100;
+      progressFill.style.width = `${progressPercent}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Home') {
+        currentSlide = 1;
+        updateSlide();
+      } else if (e.key === 'End') {
+        currentSlide = totalSlides;
+        updateSlide();
+      }
+    });
+  </script>
+</body>
+</html>

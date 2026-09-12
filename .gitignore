@@ -52,3 +52,6 @@ data/*.sqlite-wal
 
 # test screenshots
 public/test-screenshots/
+
+# office temp files
+~$*
